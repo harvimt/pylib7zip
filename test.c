@@ -70,19 +70,19 @@ int main(int argc, char** argv){
 	printf("Item Count: %d\n", item_count);
 
 	c7z_ArchiveItem* arc_item;
-	unsigned __int64 hash;
+	unsigned __int64 hash = 0xFFFFFF;
 	bool isdir;
 
 	for(unsigned int i = 0; i < item_count; i += 1){
 		printf("Item #%u:\n", i);
 		if(!c7zArc_GetItemInfo(archive, i, &arc_item)){
-			fprintf(stderr, "Error Getting Item info for item %d, errcode=%s\n", i, LAST_ERR);
-			return 1;
+			//fprintf(stderr, "Error Getting Item info for item %d, errcode=%s\n", i, LAST_ERR);
+			//return 1;
 		}
 
 		if(!c7zItm_GetUInt64Property(arc_item, kpidChecksum, &hash)){
-			fprintf(stderr, "Error Getting checksum for item %d, errcode=%s\n", i, LAST_ERR);
-			return 1;
+			//fprintf(stderr, "Error Getting checksum for item %d, errcode=%s\n", i, LAST_ERR);
+			//return 1;
 		}
 
 		isdir = c7zItm_IsDir(arc_item); //Note: you could use ...GetBoolProperty(..., kpidIsDir, ...) instead
@@ -95,7 +95,7 @@ int main(int argc, char** argv){
 	}
 
 	c7zArc_Close(archive);
-	free_C7ZipArchive(archive);
+	//free_C7ZipArchive(archive);
 
 	c7zLib_Deinitialize(lib);
 	return 0;

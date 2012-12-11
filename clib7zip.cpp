@@ -93,18 +93,15 @@ bool c7zItm_GetBoolProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyInd
 // InStream
 
 c7z_InStream* create_c7zInSt_Filename(const char* filename){
-	C7ZipInStreamFWrapper instream(filename);
-	C7ZipInStream* r = & instream;
-	return static_cast<c7z_InStream*>(r);
+	return static_cast<c7z_InStream*>(new C7ZipInStreamFWrapper(filename));
 }
 
 c7z_InStream* create_c7zInSt_FD(FILE* fd, wchar_t* ext){
-	C7ZipInStreamFWrapper instream(fd, ext);
-	C7ZipInStream* r = &instream;
-	return static_cast<c7z_InStream*>(r);
+	return static_cast<c7z_InStream*>(new C7ZipInStreamFWrapper(fd, wstring(ext)));
 }
 
 const wchar_t* c7zInSt_GetExt(c7z_InStream* self){
+	//return L"7z";
 	return static_cast<C7ZipInStream*>(self)->GetExt().c_str();
 }
 
@@ -133,10 +130,6 @@ int c7zOutSt_SetSize(c7z_OutStream* self, unsigned __int64 size){
 }
 
 //Archive
-void free_C7ZipArchive(c7z_Archive* self){
-	delete static_cast<C7ZipArchive*>(self);
-}
-
 bool c7zArc_GetItemCount(c7z_Archive* self, unsigned int * pNumItems){
 	return static_cast<C7ZipArchive*>(self)->GetItemCount(pNumItems);
 }

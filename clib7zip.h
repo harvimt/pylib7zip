@@ -1,3 +1,15 @@
+/**
+ * (C) 2012 Mark Harviston
+ *
+ * This is Free Software
+ *
+ * C-Wrapper for the C++ API lib7zip
+ * which is in turn a wrapper over 7z.so/7z.dll which is a C API...
+ * but it uses windows COM+ conventions
+ *
+ * File extensions are given w/o the . e.g. "7z" not ".7z"
+ */
+
 #pragma once
 
 #if !__cplusplus
@@ -98,7 +110,7 @@ int c7zOutSt_Seek(c7z_OutStream* self, __int64 offset, unsigned int seekOrigin, 
 int c7zOutSt_SetSize(c7z_OutStream* self, unsigned __int64 size);
 
 //Archive
-void free_C7ZipArchive(c7z_Archive* self);
+//void free_C7ZipArchive(c7z_Archive* self); Close
 
 void free_C7ZipArchive(c7z_Archive* self);
 
@@ -109,7 +121,7 @@ bool c7zArc_ExtractByIndex(c7z_Archive* self, unsigned int index, c7z_OutStream 
 bool c7zArc_ExtractByIndexPW(c7z_Archive* self, unsigned int index, c7z_OutStream * pOutStream, const wchar_t* password);
 bool c7zArc_ExtractByItem(c7z_Archive* self, const c7z_ArchiveItem * pArchiveItem, c7z_OutStream * pOutStream);
 
-void c7zArc_Close(c7z_Archive* self);
+void c7zArc_Close(c7z_Archive* self); //frees the pointer
 
 bool c7zArc_GetUInt64Property(c7z_Archive* self, PropertyIndexEnum propertyIndex, unsigned __int64 * const val);
 bool c7zArc_GetBoolProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, bool * const val);

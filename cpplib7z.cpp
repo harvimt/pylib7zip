@@ -1,5 +1,7 @@
 #include <cstdio>
 
+//#include <iostream>
+
 #include <fstream>
 #include <ios>
 #include <utf8.h> //C++ UTF-8 Library
@@ -16,11 +18,12 @@ C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename){
 	size_t ext_pos = filename.rfind('.') + 1;
 	utf8to16(filename.begin() + ext_pos, filename.end(), back_inserter(m_ext));
 
-	//Get File SIze
+	//std::wcout << "m_ext: " << m_ext << std::endl;
+
+	//Get File Size
 	fseek(m_fd, 0L, SEEK_END);
 	m_size = ftell(m_fd);
 	fseek(m_fd, 0L, SEEK_SET);
-
 }
 
 C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (FILE* fd, const wstring ext) : m_fd(fd), m_ext(ext) { }
@@ -74,7 +77,7 @@ int C7ZipInStreamFWrapper::GetSize(unsigned __int64 * size){
 C7ZipOutStreamFWrapper::C7ZipOutStreamFWrapper (const string filename){
 	m_fd = fopen(filename.c_str(), "wb");
 	
-	//Get File SIze
+	//Get File Size
 	fseek(m_fd, 0L, SEEK_END);
 	m_size = ftell(m_fd);
 	fseek(m_fd, 0L, SEEK_SET);

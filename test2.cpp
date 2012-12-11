@@ -91,7 +91,7 @@ int main(int argc, char** argv){
 
 		const wstring& path = item->GetFullPath();
 		if(!item->GetUInt64Property(lib7zip::kpidChecksum, checksum)){
-			cerr << "Failed to get checksum for item, #" << i << ", errcode=" << LAST_ERR << endl;
+			//cerr << "Failed to get checksum for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
 		if(!item->GetUInt64Property(lib7zip::kpidSize, size)){
@@ -101,6 +101,7 @@ int main(int argc, char** argv){
 		printf("%u\t%s\t%lx\t%u\t%ls\n", i, isdir?"D":"F", checksum, size, path.c_str());
 	}
 
+	archive->Close();
 
 	lib.Deinitialize();
 	return 0;
