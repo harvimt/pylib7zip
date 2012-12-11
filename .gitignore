@@ -1,0 +1,7 @@
+.*.swp
+.*.swo
+*.o
+*.so
+test
+test2
+testutf8
