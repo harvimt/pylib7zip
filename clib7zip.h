@@ -136,4 +136,4 @@ void c7zLib_Deinitialize(c7z_Library* self);
 bool c7zLib_GetSupportedExts(c7z_Library* self, const wchar_t *** exts, unsigned int * size);
 bool c7zLib_OpenArchive(c7z_Library* self, c7z_InStream* pInStream, c7z_Archive ** ppArchive);
 bool c7zLib_IsInitialized(c7z_Library* self);
-const ErrorCodeEnum c7zLib_GetLastError(c7z_Library* self);
+ErrorCodeEnum c7zLib_GetLastError(c7z_Library* self);

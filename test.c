@@ -14,7 +14,7 @@ static const char* err_codes[] = {
 #define LAST_ERR err_codes[c7zLib_GetLastError(lib)]
 const char* COALESCE(const char* x, const char* y){ return x?x:y; }
 
-int main(int argc, char** argv){
+int main(){
 	c7z_Library* lib = create_C7ZipLibrary();
 	if (lib == NULL){
 		fprintf(stderr, "Failed to allocate C7zip Library\n");
@@ -89,7 +89,7 @@ int main(int argc, char** argv){
 
 		const wchar_t* path = c7zItm_GetFullPath(arc_item); //Note: similar, could use GetStringProperty intstead
 
-		printf("path=%ls\nisdir=%d\nhash %lx\n\n", path, isdir, hash);
+		printf("path=%ls\nisdir=%d\nhash %llx\n\n", path, isdir, hash);
 
 		free_C7ZipArchiveItem(arc_item);
 	}

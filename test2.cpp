@@ -23,7 +23,7 @@ inline const char* COALESCE(const char* x, const char* y){ return x?x:y; }
 
 using namespace std;
 
-int main(int argc, char** argv){
+int main(){
 
 	C7ZipLibrary lib;
 	if(!lib.Initialize()){
@@ -94,11 +94,13 @@ int main(int argc, char** argv){
 			//cerr << "Failed to get checksum for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
-		if(!item->GetUInt64Property(lib7zip::kpidSize, size)){
+		if(!item->GetUInt64Property(lib7zip::kpidSize, filesize)){
 			cerr << "Failed to get size for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
-		printf("%u\t%s\t%lx\t%u\t%ls\n", i, isdir?"D":"F", checksum, size, path.c_str());
+		printf("%u\t%s\t%llx\t%llu\t%ls\n", i, isdir?"D":"F", checksum, size, path.c_str());
+
+		delete item;
 	}
 
 	archive->Close();

@@ -9,16 +9,17 @@
  */
 class C7ZipInStreamFWrapper : public C7ZipInStream {
 	private:
+		FILE* m_fd;
 		wstring m_ext;
 		unsigned __int64 m_size;
-		FILE* m_fd;
+		bool owns_pointer;
 
 	public:
 		C7ZipInStreamFWrapper (const string filename);
 
 		C7ZipInStreamFWrapper (FILE* fd, const wstring ext);
 
-		~C7ZipInStreamFWrapper();
+		virtual ~C7ZipInStreamFWrapper();
 
 		wstring GetExt() const { return m_ext; }
 
@@ -50,7 +51,8 @@ class C7ZipOutStreamFWrapper : public C7ZipOutStream {
 
 		int GetFileSize() const { return m_size; }
 
-		int SetSize(unsigned __int64 size) const { return 0; }; //placebo method, snark, snark
+		int SetSize(unsigned __int64 size) const { (void)size; return 0; }; //placebo method, snark, snark
+		//casting a var to void, silences the unnused param error
 
 };
 
@@ -59,9 +61,9 @@ class C7ZipOutStreamFWrapper : public C7ZipOutStream {
  */
 class C7ZipInStreamSWrapper : public C7ZipInStream {
 	private:
+		std::istream * m_stream;
 		wstring m_ext;
 		unsigned __int64 m_size;
-		std::istream * m_stream;
 
 	public:
 		C7ZipInStreamSWrapper (const string filename);
@@ -100,6 +102,7 @@ class C7ZipOutStreamSWrapper : public C7ZipOutStream {
 
 		int GetFileSize() const { return m_size; }
 
-		int SetSize(unsigned __int64 size) const { return 0; }; //placebo method, snark, snark
+		int SetSize(unsigned __int64 size) const { (void)size; return 0; }; //placebo method, snark, snark
+		//casting a var to void, silences the unnused param error
 
 };

@@ -1,6 +1,7 @@
-LDFLAGS=-l7zip -ldl -lstdc++
-CFLAGS=-std=c99 -ggdb
-CXXFLAGS=-std=c++11 -ggdb
+LDFLAGS=-l7zip -ldl -lstdc++ 
+CFLAGS=-std=c99 -ggdb -Werror -Wextra -Wall
+CXXFLAGS=-std=c++11 -ggdb -Werror -Wextra -Wall
+#CXXFLAGS=$(CXXFLAGS) -Weffc++ #Add warnings about Scot Meyer's C++
 
 all: clib7zip.so pylib7zip.so test test2
 

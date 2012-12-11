@@ -231,7 +231,7 @@ bool c7zLib_IsInitialized(c7z_Library* self){
 	return static_cast<C7ZipLibrary*>(self)->IsInitialized();
 }
 
-const ErrorCodeEnum c7zLib_GetLastError(c7z_Library* self) {
+ErrorCodeEnum c7zLib_GetLastError(c7z_Library* self) {
 	return static_cast<ErrorCodeEnum>( static_cast<C7ZipLibrary*>(self)->GetLastError() );
 }
 

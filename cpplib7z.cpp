@@ -218,6 +218,12 @@ int C7ZipOutStreamSWrapper::Write(const void *data, unsigned int size, unsigned 
 	if(m_stream->fail()){
 		return 1;
 	}
+
+	if(processedSize){
+		*processedSize = size;
+	}
+
+	return 0;
 }
 
 int C7ZipOutStreamSWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigned __int64 *newPosition){

@@ -20,7 +20,11 @@ initpy7z(void){
 static PyObject *
 p7z_openarchive(PyObject *self, PyObject *args)
 {
-
+	(void) self;
+	(void) args;
+		
+	//TODO
+	return NULL;
 }
 
 }
