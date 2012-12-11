@@ -1,6 +1,8 @@
 #include <python2.7/Python.h>
 #include "clib7zip.h"
 
+extern "C" {
+
 static PyObject *
 p7z_openarchive(PyObject *self, PyObject *args);
 
@@ -11,10 +13,14 @@ static PyMethodDef P7ZMethods[] = {
 PyMODINIT_FUNC
 initpy7z(void){
 	(void) Py_InitModule("pylib7z", P7ZMethods);
+
+
 }
 
 static PyObject *
 p7z_openarchive(PyObject *self, PyObject *args)
 {
+
+}
 
 }

@@ -1,7 +1,6 @@
-#ifndef clib7zip
-#define clib7zip
+#pragma once
 
-#if !CPLUSPLUS
+#if !__cplusplus
 #include <stdbool.h>
 #endif
 #include <wchar.h>
@@ -11,6 +10,11 @@
 #define __int64 long long int
 
 #endif
+
+/**
+ * Items that return bool, true == success, false== failure
+ * Items that return int (as opposed to unsigned int, or __int64), 0 == success, non-zero == failure
+ */
 
 typedef enum {
 	PROP_INDEX_BEGIN,
@@ -65,9 +69,11 @@ typedef void c7z_Library;
 
 //Object
 
-
 //ArchiveItem
+///free a c7z_ArchiveItem pointer
 void free_C7ZipArchiveItem(c7z_ArchiveItem* self);
+
+///Borrowed Pointer, no need to deallocate
 const wchar_t* c7zItm_GetFullPath(c7z_ArchiveItem* self);
 unsigned __int64 c7zItm_GetSize(c7z_ArchiveItem* self);
 bool c7zItm_IsDir(c7z_ArchiveItem* self);
@@ -76,7 +82,7 @@ unsigned int C7zItm_GetArchiveIndex(c7z_ArchiveItem* self);
 const wchar_t* c7zItm_GetFullPath(c7z_ArchiveItem* self);
 bool c7zItm_GetUInt64Property(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, unsigned __int64 * val);
 bool c7zItm_GetFileTimeProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, unsigned __int64 * val);
-bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, wchar_t * buf, size_t buf_size);
+bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, const wchar_t ** val);
 bool c7zItm_GetBoolProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, bool * val);
 
 //InStream
@@ -107,7 +113,7 @@ void c7zArc_Close(c7z_Archive* self);
 
 bool c7zArc_GetUInt64Property(c7z_Archive* self, PropertyIndexEnum propertyIndex, unsigned __int64 * const val);
 bool c7zArc_GetBoolProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, bool * const val);
-bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, wchar_t * const buf, size_t buf_size);
+bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, const wchar_t ** val);
 bool c7zArc_GetFileTimeProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, unsigned __int64 * const val);
 
 //Library
@@ -119,4 +125,3 @@ bool c7zLib_GetSupportedExts(c7z_Library* self, const wchar_t *** exts, unsigned
 bool c7zLib_OpenArchive(c7z_Library* self, c7z_InStream* pInStream, c7z_Archive ** ppArchive);
 bool c7zLib_IsInitialized(c7z_Library* self);
 const ErrorCodeEnum c7zLib_GetLastError(c7z_Library* self);
-#endif

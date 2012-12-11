@@ -6,11 +6,8 @@
 #include <cstdio>
 #include "cpplib7z.h"
 
-
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
-
-#define E_FAIL 0x80004005
 
 static const char* err_codes[] = {
 	"NO_ERROR",
@@ -51,6 +48,7 @@ int main(int argc, char** argv){
 	//C7ZipInStreamFWrapper instream("/media/Media/Games/Game Mods/oblivion/Bash Installers/QTP3 Redimized.zip");
 
 	wcout << L"GetExt: " << instream.GetExt() << endl;
+
 	unsigned __int64 size;
 	if(instream.GetSize(&size) != S_OK){
 		cerr << "Error getting size of stream" << endl;
@@ -64,8 +62,6 @@ int main(int argc, char** argv){
 		return 1;
 	}
 	printf("Successfully opened Archive!");
-
-	
 
 	unsigned int item_count;
 	if(!archive->GetItemCount(&item_count)){

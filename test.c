@@ -87,9 +87,7 @@ int main(int argc, char** argv){
 
 		isdir = c7zItm_IsDir(arc_item); //Note: you could use ...GetBoolProperty(..., kpidIsDir, ...) instead
 
-
-		const wchar_t* path = c7zItm_GetFullPath(arc_item); //Note: similar, could use GetStringProperty intstead,
-		                                                    //but you have to send it a buffer if you do.
+		const wchar_t* path = c7zItm_GetFullPath(arc_item); //Note: similar, could use GetStringProperty intstead
 
 		printf("path=%ls\nisdir=%d\nhash %lx\n\n", path, isdir, hash);
 

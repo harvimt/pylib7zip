@@ -75,18 +75,14 @@ bool c7zItm_GetFileTimeProperty(c7z_ArchiveItem* self, PropertyIndexEnum propert
 	return static_cast<C7ZipArchiveItem*>(self)->GetFileTimeProperty(static_cast<lib7zip::PropertyIndexEnum>(propertyIndex), *val);
 }
 
-bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, wchar_t * const buf, size_t buf_size){
-	wstring val;
-	if(!static_cast<C7ZipArchiveItem*>(self)->GetStringProperty(static_cast<lib7zip::PropertyIndexEnum>(propertyIndex),  val)){
+bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, const wchar_t ** val){
+	wstring _val;
+	if(!static_cast<C7ZipArchiveItem*>(self)->GetStringProperty(static_cast<lib7zip::PropertyIndexEnum>(propertyIndex),  _val)){
 		return false;
 	}
-	
-	if(val.length() > buf_size){
-		return false;
-	}
-	
-	wcsncpy(buf, val.c_str(), buf_size);
 
+	*val = _val.c_str();
+	
 	return true;
 }
 
@@ -109,12 +105,7 @@ c7z_InStream* create_c7zInSt_FD(FILE* fd, wchar_t* ext){
 }
 
 const wchar_t* c7zInSt_GetExt(c7z_InStream* self){
-	printf("Got to GetExt!\n");
-	const wstring wext = static_cast<C7ZipInStream*>(self)->GetExt();
-	//const wchar_t* ext = 
-	//printf("GetExt: %ls\n", wext.c_str());
-	//return ext;
-	return L".ext";
+	return static_cast<C7ZipInStream*>(self)->GetExt().c_str();
 }
 
 int c7zInSt_Read(c7z_InStream* self, void* data, unsigned int size, unsigned int *processedSize){
@@ -187,17 +178,13 @@ bool c7zArc_GetBoolProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, 
 	return static_cast<C7ZipArchive*>(self)->GetBoolProperty( static_cast<lib7zip::PropertyIndexEnum>(propertyIndex), *val);
 }
 
-bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, wchar_t * const buf, size_t buf_size){
-	wstring val;
-	if(!static_cast<C7ZipArchive*>(self)->GetStringProperty(static_cast<lib7zip::PropertyIndexEnum>(propertyIndex),  val)){
+bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, const wchar_t ** val){
+	wstring _val;
+	if(!static_cast<C7ZipArchive*>(self)->GetStringProperty(static_cast<lib7zip::PropertyIndexEnum>(propertyIndex),  _val)){
 		return false;
 	}
 
-	if(val.length() > buf_size){
-		return false;
-	}
-	
-	wcsncpy(buf, val.c_str(), buf_size);
+	*val = _val.c_str();
 
 	return true;
 }

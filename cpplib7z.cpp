@@ -196,7 +196,7 @@ int C7ZipInStreamSWrapper::GetSize(unsigned __int64 * size){
 	return 0;
 }
 
-// Out Stream
+// Out Stream IO-Streams
 C7ZipOutStreamSWrapper::C7ZipOutStreamSWrapper (const string filename) : m_size(0) {
 	using namespace std;
 	m_stream = new fstream(filename.c_str(), ios::in | ios::out | ios::binary);

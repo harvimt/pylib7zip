@@ -1,10 +1,12 @@
+#pragma once
+
 #include <lib7zip.h>
 #include <istream>
 #include <ostream>
 
-#ifndef cpplib7z
-#define cpplib7z
-
+/**
+ * Implementation of 7-Zip In Stream based on cstdio File-Pointers (FILE*)
+ */
 class C7ZipInStreamFWrapper : public C7ZipInStream {
 	private:
 		wstring m_ext;
@@ -27,6 +29,9 @@ class C7ZipInStreamFWrapper : public C7ZipInStream {
 		int GetSize(unsigned __int64 * size);
 };
 
+/**
+ * Implementation of 7-Zip Out Stream based on cstdio File-Pointers (FILE*)
+ */
 class C7ZipOutStreamFWrapper : public C7ZipOutStream {
 	private:
 		FILE * m_fd;
@@ -49,6 +54,9 @@ class C7ZipOutStreamFWrapper : public C7ZipOutStream {
 
 };
 
+/**
+ * Implementation of 7-Zip In Stream based on C++ IO std::istream
+ */
 class C7ZipInStreamSWrapper : public C7ZipInStream {
 	private:
 		wstring m_ext;
@@ -71,6 +79,9 @@ class C7ZipInStreamSWrapper : public C7ZipInStream {
 		int GetSize(unsigned __int64 * size);
 };
 
+/**
+ * Implementation of 7-Zip Out Stream based on C++ IO std::ostream
+ */
 class C7ZipOutStreamSWrapper : public C7ZipOutStream {
 	private:
 		std::ostream * m_stream;
@@ -92,5 +103,3 @@ class C7ZipOutStreamSWrapper : public C7ZipOutStream {
 		int SetSize(unsigned __int64 size) const { return 0; }; //placebo method, snark, snark
 
 };
-
-#endif
