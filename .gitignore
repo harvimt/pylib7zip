@@ -2,6 +2,7 @@
 .*.swo
 *.o
 *.so
+*.bcpp
+*.bchpp
 test
 test2
-testutf8
