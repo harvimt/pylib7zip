@@ -20,7 +20,6 @@
 #ifndef _WIN32
 
 #define __int64 long long int
-
 #endif
 
 /**
@@ -28,36 +27,38 @@
  * Items that return int (as opposed to unsigned int, or __int64), 0 == success, non-zero == failure
  */
 
-typedef enum {
+typedef enum
+{
 	PROP_INDEX_BEGIN,
 
-	kpidPackSize = PROP_INDEX_BEGIN, //(Packed Size)
-	kpidAttrib, //(Attributes)
-	kpidCTime, //(Created)
-	kpidATime, //(Accessed)
-	kpidMTime, //(Modified)
-	kpidSolid, //(Solid)
-	kpidEncrypted, //(Encrypted)
-	kpidUser, //(User)
-	kpidGroup, //(Group)
-	kpidComment, //(Comment)
-	kpidPhySize, //(Physical Size)
-	kpidHeadersSize, //(Headers Size)
-	kpidChecksum, //(Checksum)
-	kpidCharacts, //(Characteristics)
-	kpidCreatorApp, //(Creator Application)
-	kpidTotalSize, //(Total Size)
-	kpidFreeSpace, //(Free Space)
-	kpidClusterSize, //(Cluster Size)
-	kpidVolumeName, //(Label)
-	kpidPath, //(FullPath)
-	kpidIsDir, //(IsDir)
-	kpidSize, //(Uncompressed Size)
+	kpidPackSize = PROP_INDEX_BEGIN,//(Packed Size)
+	kpidAttrib,//(Attributes)
+	kpidCTime,//(Created)
+	kpidATime,//(Accessed)
+	kpidMTime,//(Modified)
+	kpidSolid,//(Solid)
+	kpidEncrypted,//(Encrypted)
+	kpidUser,//(User)
+	kpidGroup,//(Group)
+	kpidComment,//(Comment)
+	kpidPhySize,//(Physical Size)
+	kpidHeadersSize,//(Headers Size)
+	kpidChecksum,//(Checksum)
+	kpidCharacts,//(Characteristics)
+	kpidCreatorApp,//(Creator Application)
+	kpidTotalSize,//(Total Size)
+	kpidFreeSpace,//(Free Space)
+	kpidClusterSize,//(Cluster Size)
+	kpidVolumeName,//(Label)
+	kpidPath,//(FullPath)
+	kpidIsDir,//(IsDir)
+	kpidSize,//(Uncompressed Size)
 
 	PROP_INDEX_END
 } PropertyIndexEnum;
 
-typedef enum {
+typedef enum
+{
 	ErrorCode_Begin,
 
 	NO_ERROR = ErrorCode_Begin,
@@ -71,7 +72,7 @@ typedef enum {
 
 //Types
 typedef void c7z_Object;
-typedef void c7z_ObjPtrArr; // Object Pointer Array, aka a list of c7z_Objects/C7ZipObjects
+typedef void c7z_ObjPtrArr;// Object Pointer Array, aka a list of c7z_Objects/C7ZipObjects
 typedef void c7z_ArchiveItem;
 typedef void c7z_InStream;
 typedef void c7z_MultiVolume;
@@ -121,7 +122,7 @@ bool c7zArc_ExtractByIndex(c7z_Archive* self, unsigned int index, c7z_OutStream 
 bool c7zArc_ExtractByIndexPW(c7z_Archive* self, unsigned int index, c7z_OutStream * pOutStream, const wchar_t* password);
 bool c7zArc_ExtractByItem(c7z_Archive* self, const c7z_ArchiveItem * pArchiveItem, c7z_OutStream * pOutStream);
 
-void c7zArc_Close(c7z_Archive* self); //frees the pointer
+void c7zArc_Close(c7z_Archive* self);//frees the pointer
 
 bool c7zArc_GetUInt64Property(c7z_Archive* self, PropertyIndexEnum propertyIndex, unsigned __int64 * const val);
 bool c7zArc_GetBoolProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, bool * const val);

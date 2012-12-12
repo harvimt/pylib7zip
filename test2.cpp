@@ -9,7 +9,8 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-static const char* err_codes[] = {
+static const char* err_codes[] =
+{
 	"NO_ERROR",
 	"UNKNOWN_ERROR",
 	"NOT_INITIALIZE",
@@ -23,22 +24,23 @@ inline const char* COALESCE(const char* x, const char* y){ return x?x:y; }
 
 using namespace std;
 
-int main(){
+int main()
+{
 
 	C7ZipLibrary lib;
-	if(!lib.Initialize()){
+	if(!lib.Initialize()) {
 		cerr << "Failed to Initialize Lib7Zip Library, errcode=" << LAST_ERR << endl;
 		cerr << COALESCE(dlerror(), "NO ERROR") << endl;
 		return 1;
 	}
 
 	vector<wstring> supported_exts;
-	if(!lib.GetSupportedExts(supported_exts)){
+	if(!lib.GetSupportedExts(supported_exts)) {
 		cerr << "Failed to GetSupportedExts, errcode=" << LAST_ERR << endl;
 		return 1;
 	}
 	cout << "Supported Extensions: ";
-	foreach(wstring ext, supported_exts){
+	foreach(wstring ext, supported_exts) {
 		wcout << ext << L",";
 	}
 	cout << endl;
@@ -50,21 +52,21 @@ int main(){
 	wcout << L"GetExt: " << instream.GetExt() << endl;
 
 	unsigned __int64 size;
-	if(instream.GetSize(&size) != S_OK){
+	if(instream.GetSize(&size) != S_OK) {
 		cerr << "Error getting size of stream" << endl;
 		return 1;
 	}
 	cout << "GetSize: " << size << endl;
 
 	C7ZipArchive* archive = NULL;
-	if(!lib.OpenArchive(&instream, &archive)){
+	if(!lib.OpenArchive(&instream, &archive)) {
 		cerr << "Failed to Open Archive, errcode="<< LAST_ERR << endl;
 		return 1;
 	}
 	printf("Successfully opened Archive!");
 
 	unsigned int item_count;
-	if(!archive->GetItemCount(&item_count)){
+	if(!archive->GetItemCount(&item_count)) {
 		cerr << "Failed to Get Item Count, errcode="<< LAST_ERR << endl;
 		return 1;
 	}
@@ -74,9 +76,9 @@ int main(){
 	unsigned __int64 filesize = 0x0;
 	unsigned __int64 checksum = 0xFFFFFFFF;
 	bool isdir;
-	for(unsigned int i = 0; i < item_count; i += 1){
+	for(unsigned int i = 0; i < item_count; i += 1) {
 		C7ZipArchiveItem* item;
-		if(!archive->GetItemInfo(i, &item)){
+		if(!archive->GetItemInfo(i, &item)) {
 			cerr << "Failed to GetItemInfo for item, #" << i << ", errcode=" << LAST_ERR << endl;
 			return 1;
 		}
@@ -85,16 +87,16 @@ int main(){
 		isdir = item->IsDir();
 
 		//or with GetBoolProperty(...)
-		if(!item->GetBoolProperty(lib7zip::kpidIsDir, isdir)){
+		if(!item->GetBoolProperty(lib7zip::kpidIsDir, isdir)) {
 			cerr << "Failed to get IsDir for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
 		const wstring& path = item->GetFullPath();
-		if(!item->GetUInt64Property(lib7zip::kpidChecksum, checksum)){
+		if(!item->GetUInt64Property(lib7zip::kpidChecksum, checksum)) {
 			//cerr << "Failed to get checksum for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
-		if(!item->GetUInt64Property(lib7zip::kpidSize, filesize)){
+		if(!item->GetUInt64Property(lib7zip::kpidSize, filesize)) {
 			cerr << "Failed to get size for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 

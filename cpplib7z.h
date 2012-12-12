@@ -7,7 +7,8 @@
 /**
  * Implementation of 7-Zip In Stream based on cstdio File-Pointers (FILE*)
  */
-class C7ZipInStreamFWrapper : public C7ZipInStream {
+class C7ZipInStreamFWrapper : public C7ZipInStream
+{
 	private:
 		FILE* m_fd;
 		wstring m_ext;
@@ -33,7 +34,8 @@ class C7ZipInStreamFWrapper : public C7ZipInStream {
 /**
  * Implementation of 7-Zip Out Stream based on cstdio File-Pointers (FILE*)
  */
-class C7ZipOutStreamFWrapper : public C7ZipOutStream {
+class C7ZipOutStreamFWrapper : public C7ZipOutStream
+{
 	private:
 		FILE * m_fd;
 		int m_size;
@@ -51,7 +53,11 @@ class C7ZipOutStreamFWrapper : public C7ZipOutStream {
 
 		int GetFileSize() const { return m_size; }
 
-		int SetSize(unsigned __int64 size) const { (void)size; return 0; }; //placebo method, snark, snark
+		//placebo method, snark, snark
+		int SetSize(unsigned __int64 size) const
+		{
+			(void)size; return 0;
+		};
 		//casting a var to void, silences the unnused param error
 
 };
@@ -59,7 +65,8 @@ class C7ZipOutStreamFWrapper : public C7ZipOutStream {
 /**
  * Implementation of 7-Zip In Stream based on C++ IO std::istream
  */
-class C7ZipInStreamSWrapper : public C7ZipInStream {
+class C7ZipInStreamSWrapper : public C7ZipInStream
+{
 	private:
 		std::istream * m_stream;
 		wstring m_ext;
@@ -84,7 +91,8 @@ class C7ZipInStreamSWrapper : public C7ZipInStream {
 /**
  * Implementation of 7-Zip Out Stream based on C++ IO std::ostream
  */
-class C7ZipOutStreamSWrapper : public C7ZipOutStream {
+class C7ZipOutStreamSWrapper : public C7ZipOutStream
+{
 	private:
 		std::ostream * m_stream;
 		int m_size;
@@ -102,7 +110,11 @@ class C7ZipOutStreamSWrapper : public C7ZipOutStream {
 
 		int GetFileSize() const { return m_size; }
 
-		int SetSize(unsigned __int64 size) const { (void)size; return 0; }; //placebo method, snark, snark
+		//placebo method, snark, snark
+		int SetSize(unsigned __int64 size) const
+		{
+			(void)size; return 0;
+		};
 		//casting a var to void, silences the unnused param error
 
 };
