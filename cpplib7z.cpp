@@ -16,6 +16,8 @@ C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename)
 	//Open file
 	m_fd = fopen(filename.c_str(), "rb");
 
+	if(!m_fd) return;
+
 	//Get Extension
 	size_t ext_pos = filename.rfind('.') + 1;
 	if(sizeof(wchar_t) == 2) {
@@ -33,7 +35,14 @@ C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename)
 }
 
 
-C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (FILE* fd, const wstring ext) : m_fd(fd), m_ext(ext) { }
+C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (FILE* fd, const wstring ext) : m_fd(fd), m_ext(ext) {
+	if(!m_fd) return;
+
+	//Get File Size
+	fseek(m_fd, 0L, SEEK_END);
+	m_size = ftell(m_fd);
+	fseek(m_fd, 0L, SEEK_SET);
+}
 
 C7ZipInStreamFWrapper::~C7ZipInStreamFWrapper()
 {

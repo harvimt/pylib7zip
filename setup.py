@@ -12,9 +12,12 @@
 from distutils.core import setup, Extension
 
 lib7zip_mod = Extension('lib7zip',
-		sources = ['pylib7zip.cpp'])
+		libraries=['7zip','dl'],
+		sources = ['pylib7zip.cpp', 'cpplib7z.cpp'])
 
 setup (name = 'Lib7zip',
-		version = '0.a',
+		version = '0.1',
+		author = "Mark Harviston",
+		author_email = "mark.harviston@gmail.com",
 		description = 'Python Bindings to lib7zip, for accessing various archive formats.',
 		ext_modules = [lib7zip_mod])
