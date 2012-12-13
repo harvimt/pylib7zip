@@ -74,11 +74,11 @@ int main()
 	cout << "Item Count: " << item_count << endl;
 
 	unsigned __int64 filesize = 0x0;
-	unsigned __int64 checksum = 0xFFFFFFFF;
+	unsigned __int64 checksum = 0xDEADBEEF;
 	bool isdir;
 	for(unsigned int i = 0; i < item_count; i += 1) {
-		C7ZipArchiveItem* item;
-		if(!archive->GetItemInfo(i, &item)) {
+		C7ZipArchiveItem* item = NULL;
+		if(!archive->GetItemInfo(i, &item) && item != NULL) {
 			cerr << "Failed to GetItemInfo for item, #" << i << ", errcode=" << LAST_ERR << endl;
 			return 1;
 		}
@@ -100,12 +100,13 @@ int main()
 			cerr << "Failed to get size for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
-		printf("%u\t%s\t%llx\t%llu\t%ls\n", i, isdir?"D":"F", checksum, size, path.c_str());
+		printf("%u\t%s\t%08llx\t%llu\t%ls\n", i, isdir?"D":"F", checksum, size, path.c_str());
 
 		delete item;
 	}
 
 	archive->Close();
+	delete archive;
 
 	lib.Deinitialize();
 	return 0;

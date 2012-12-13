@@ -7,6 +7,7 @@
 #include <utf8.h>//C++ UTF-8 Library
 #include "cpplib7z.h"
 
+
 // In Stream (FD)
 
 C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename)
@@ -17,7 +18,11 @@ C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename)
 
 	//Get Extension
 	size_t ext_pos = filename.rfind('.') + 1;
-	utf8to16(filename.begin() + ext_pos, filename.end(), back_inserter(m_ext));
+	if(sizeof(wchar_t) == 2) {
+		utf8to16(filename.begin() + ext_pos, filename.end(), back_inserter(m_ext));
+	}else if(sizeof(wchar_t) == 4){
+		utf8to32(filename.begin() + ext_pos, filename.end(), back_inserter(m_ext));
+	}
 
 	//std::wcout << "m_ext: " << m_ext << std::endl;
 
@@ -149,8 +154,16 @@ int C7ZipOutStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsign
 C7ZipInStreamSWrapper::C7ZipInStreamSWrapper (const string filename)
 {
 	using namespace std;
+	using namespace utf8;
 
 	m_stream = new ifstream(filename.c_str(), ifstream::binary | ifstream::in);
+
+	size_t ext_pos = filename.rfind('.') + 1;
+	if(sizeof(wchar_t) == 2) {
+		utf8to16(filename.begin() + ext_pos, filename.end(), back_inserter(m_ext));
+	}else if(sizeof(wchar_t) == 4){
+		utf8to32(filename.begin() + ext_pos, filename.end(), back_inserter(m_ext));
+	}
 
 	m_stream->seekg (0, ios::end);
 	m_size = m_stream->tellg();

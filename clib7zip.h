@@ -1,13 +1,33 @@
 /**
- * (C) 2012 Mark Harviston
  *
- * This is Free Software
+ * Copyright (c) 2012, Mark Harviston <mark.harviston@gmail.com>
+ * This is free software, most forms of redistribution and derivitive works are permitted with the following restrictions.
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Conventions of this API:
+ * ------------------------
  *
  * C-Wrapper for the C++ API lib7zip
  * which is in turn a wrapper over 7z.so/7z.dll which is a C API...
- * but it uses windows COM+ conventions
+ * but it uses windows COM+ conventions and is awkward to use on non-windows systems,
+ * actually also on windows.
  *
- * File extensions are given w/o the . e.g. "7z" not ".7z"
+ * File extensions are given w/o the e.g. "7z" not ".7z".
+ *
+ * Functions that return a bool, return true for success and false for failure.
+ * Functions that return an int, return 0 for success and non-zero for failure.
+ *
+ * Most pointers are "borrowed" so you don't need to free() them, those that do are marked..
+ * Many lets you allocate an item on the stack and then pass in a pointer to that variable..
+ *
+ * This API is beta, be sure to check for memory leaks with valgrind.
+ *
  */
 
 #pragma once
@@ -95,7 +115,7 @@ unsigned int C7zItm_GetArchiveIndex(c7z_ArchiveItem* self);
 const wchar_t* c7zItm_GetFullPath(c7z_ArchiveItem* self);
 bool c7zItm_GetUInt64Property(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, unsigned __int64 * val);
 bool c7zItm_GetFileTimeProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, unsigned __int64 * val);
-bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, const wchar_t ** val);
+bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, wchar_t ** val);
 bool c7zItm_GetBoolProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, bool * val);
 
 //InStream
@@ -111,8 +131,6 @@ int c7zOutSt_Seek(c7z_OutStream* self, __int64 offset, unsigned int seekOrigin, 
 int c7zOutSt_SetSize(c7z_OutStream* self, unsigned __int64 size);
 
 //Archive
-//void free_C7ZipArchive(c7z_Archive* self); Close
-
 void free_C7ZipArchive(c7z_Archive* self);
 
 bool c7zArc_GetItemCount(c7z_Archive* self, unsigned int * pNumItems);
@@ -126,7 +144,7 @@ void c7zArc_Close(c7z_Archive* self);//frees the pointer
 
 bool c7zArc_GetUInt64Property(c7z_Archive* self, PropertyIndexEnum propertyIndex, unsigned __int64 * const val);
 bool c7zArc_GetBoolProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, bool * const val);
-bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, const wchar_t ** val);
+bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, wchar_t ** val);
 bool c7zArc_GetFileTimeProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, unsigned __int64 * const val);
 
 //Library

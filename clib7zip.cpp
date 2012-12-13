@@ -1,3 +1,17 @@
+/**
+ *
+ * Copyright (c) 2012, Mark Harviston <mark.harviston@gmail.com>
+ * This is free software, most forms of redistribution and derivitive works are permitted with the following restrictions.
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -11,9 +25,6 @@ extern "C"
 	#include "clib7zip.h"
 
 	//Object
-	c7z_Object* create_C7zipObject() {
-		return static_cast<c7z_Object*>(new C7ZipObject);
-	}
 	void free_c7z_Object(c7z_Object* self) {
 		delete static_cast<C7ZipObject*>(self);
 	}
@@ -76,13 +87,15 @@ extern "C"
 		return static_cast<C7ZipArchiveItem*>(self)->GetFileTimeProperty(static_cast<lib7zip::PropertyIndexEnum>(propertyIndex), *val);
 	}
 
-	bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, const wchar_t ** val) {
+	bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, wchar_t ** val) {
 		wstring _val;
 		if(!static_cast<C7ZipArchiveItem*>(self)->GetStringProperty(static_cast<lib7zip::PropertyIndexEnum>(propertyIndex),  _val)) {
 			return false;
 		}
 
-		*val = _val.c_str();
+		*val = static_cast<wchar_t*>(malloc(sizeof(wchar_t) * (_val.length()) ));
+
+		wcsncpy(*val, _val.c_str(), _val.length() + 1);
 
 		return true;
 	}
@@ -131,6 +144,11 @@ extern "C"
 	}
 
 	//Archive
+	
+	void free_C7ZipArchive(c7z_Archive* self){
+		delete static_cast<C7ZipArchive*>(self);
+	}
+
 	bool c7zArc_GetItemCount(c7z_Archive* self, unsigned int * pNumItems) {
 		return static_cast<C7ZipArchive*>(self)->GetItemCount(pNumItems);
 	}
@@ -171,13 +189,15 @@ extern "C"
 		return static_cast<C7ZipArchive*>(self)->GetBoolProperty( static_cast<lib7zip::PropertyIndexEnum>(propertyIndex), *val);
 	}
 
-	bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, const wchar_t ** val) {
+	bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, wchar_t ** val) {
 		wstring _val;
 		if(!static_cast<C7ZipArchive*>(self)->GetStringProperty(static_cast<lib7zip::PropertyIndexEnum>(propertyIndex),  _val)) {
 			return false;
 		}
 
-		*val = _val.c_str();
+		*val = static_cast<wchar_t*>(malloc(sizeof(wchar_t) * (_val.length()) ));
+
+		wcsncpy(*val, _val.c_str(), _val.length() + 1);
 
 		return true;
 	}

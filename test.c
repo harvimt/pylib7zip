@@ -56,8 +56,8 @@ int main(){
 	}
 	printf("File Extension: %ls\n", ext);
 
-	c7z_Archive* archive;
-	if(!c7zLib_OpenArchive(lib, instream, &archive)){
+	c7z_Archive* archive = NULL;
+	if(!c7zLib_OpenArchive(lib, instream, &archive) || archive == NULL){
 		fprintf(stderr, "Error opening archive, err_code=%s.\n", LAST_ERR);
 	}
 
@@ -70,11 +70,10 @@ int main(){
 	printf("Item Count: %d\n", item_count);
 
 	c7z_ArchiveItem* arc_item;
-	unsigned __int64 hash = 0xFFFFFF;
+	unsigned __int64 hash = 0xDEADBEEF;
 	bool isdir;
 
 	for(unsigned int i = 0; i < item_count; i += 1){
-		printf("Item #%u:\n", i);
 		if(!c7zArc_GetItemInfo(archive, i, &arc_item)){
 			//fprintf(stderr, "Error Getting Item info for item %d, errcode=%s\n", i, LAST_ERR);
 			//return 1;
@@ -89,13 +88,25 @@ int main(){
 
 		const wchar_t* path = c7zItm_GetFullPath(arc_item); //Note: similar, could use GetStringProperty intstead
 
-		printf("path=%ls\nisdir=%d\nhash %llx\n\n", path, isdir, hash);
+		/*
+		wchar_t* path = L"#ERROR#";
+		if(!c7zItm_GetStringProperty(arc_item, kpidPath, &path)){
+			fprintf(stderr, "#ERROR#\n");
+			path = L"#ERROR#";
+			return 1;
+		}
+		*/
+
+		printf("%03u\t%s\t%08llX\t%ls\n", i, isdir?"D":"F", hash, path);
+
+		//free(path);
 
 		free_C7ZipArchiveItem(arc_item);
 	}
 
 	c7zArc_Close(archive);
-	//free_C7ZipArchive(archive);
+
+	free_C7ZipArchive(archive);
 
 	c7zLib_Deinitialize(lib);
 	return 0;
