@@ -49,36 +49,6 @@
 
 typedef enum
 {
-	PROP_INDEX_BEGIN,
-
-	kpidPackSize = PROP_INDEX_BEGIN,//(Packed Size)
-	kpidAttrib,//(Attributes)
-	kpidCTime,//(Created)
-	kpidATime,//(Accessed)
-	kpidMTime,//(Modified)
-	kpidSolid,//(Solid)
-	kpidEncrypted,//(Encrypted)
-	kpidUser,//(User)
-	kpidGroup,//(Group)
-	kpidComment,//(Comment)
-	kpidPhySize,//(Physical Size)
-	kpidHeadersSize,//(Headers Size)
-	kpidChecksum,//(Checksum)
-	kpidCharacts,//(Characteristics)
-	kpidCreatorApp,//(Creator Application)
-	kpidTotalSize,//(Total Size)
-	kpidFreeSpace,//(Free Space)
-	kpidClusterSize,//(Cluster Size)
-	kpidVolumeName,//(Label)
-	kpidPath,//(FullPath)
-	kpidIsDir,//(IsDir)
-	kpidSize,//(Uncompressed Size)
-
-	PROP_INDEX_END
-} PropertyIndexEnum;
-
-typedef enum
-{
 	ErrorCode_Begin,
 
 	NO_ERROR = ErrorCode_Begin,
@@ -113,10 +83,10 @@ bool c7zItm_IsDir(c7z_ArchiveItem* self);
 bool c7zItm_IsEncrypted(c7z_ArchiveItem* self);
 unsigned int C7zItm_GetArchiveIndex(c7z_ArchiveItem* self);
 const wchar_t* c7zItm_GetFullPath(c7z_ArchiveItem* self);
-bool c7zItm_GetUInt64Property(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, unsigned __int64 * val);
-bool c7zItm_GetFileTimeProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, unsigned __int64 * val);
-bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, wchar_t ** val);
-bool c7zItm_GetBoolProperty(c7z_ArchiveItem* self, PropertyIndexEnum propertyIndex, bool * val);
+bool c7zItm_GetUInt64Property(c7z_ArchiveItem* self, int propertyIndex, unsigned __int64 * val);
+bool c7zItm_GetFileTimeProperty(c7z_ArchiveItem* self, int propertyIndex, unsigned __int64 * val);
+bool c7zItm_GetStringProperty(c7z_ArchiveItem* self, int propertyIndex, wchar_t ** val);
+bool c7zItm_GetBoolProperty(c7z_ArchiveItem* self, int propertyIndex, bool * val);
 
 //InStream
 c7z_InStream* create_c7zInSt_Filename(const char* filename);
@@ -142,10 +112,10 @@ bool c7zArc_ExtractByItem(c7z_Archive* self, const c7z_ArchiveItem * pArchiveIte
 
 void c7zArc_Close(c7z_Archive* self);//frees the pointer
 
-bool c7zArc_GetUInt64Property(c7z_Archive* self, PropertyIndexEnum propertyIndex, unsigned __int64 * const val);
-bool c7zArc_GetBoolProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, bool * const val);
-bool c7zArc_GetStringProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, wchar_t ** val);
-bool c7zArc_GetFileTimeProperty(c7z_Archive* self, PropertyIndexEnum propertyIndex, unsigned __int64 * const val);
+bool c7zArc_GetUInt64Property(c7z_Archive* self, int propertyIndex, unsigned __int64 * const val);
+bool c7zArc_GetBoolProperty(c7z_Archive* self, int propertyIndex, bool * const val);
+bool c7zArc_GetStringProperty(c7z_Archive* self, int propertyIndex, wchar_t ** val);
+bool c7zArc_GetFileTimeProperty(c7z_Archive* self, int propertyIndex, unsigned __int64 * const val);
 
 //Library
 c7z_Library* create_C7ZipLibrary();

@@ -87,22 +87,24 @@ int main()
 		isdir = item->IsDir();
 
 		//or with GetBoolProperty(...)
-		if(!item->GetBoolProperty(lib7zip::kpidIsDir, isdir)) {
+		if(!item->GetBoolProperty(kpidIsDir, isdir)) {
 			cerr << "Failed to get IsDir for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
 		const wstring& path = item->GetFullPath();
-		if(!item->GetUInt64Property(lib7zip::kpidChecksum, checksum)) {
+		if(!item->GetUInt64Property(kpidCRC, checksum)) {
+			checksum = 0xDEADBEEF;
 			//cerr << "Failed to get checksum for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
-		if(!item->GetUInt64Property(lib7zip::kpidSize, filesize)) {
+		//filesize = item->GetSize();
+		if(!item->GetUInt64Property(kpidSize, filesize)) {
 			cerr << "Failed to get size for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
-		printf("%u\t%s\t%08llx\t%llu\t%ls\n", i, isdir?"D":"F", checksum, size, path.c_str());
+		printf("%u\t%s\t%08llX\t%llu\t%ls\n", i, isdir?"D":"F", checksum, filesize, path.c_str());
 
-		delete item;
+		//delete item;
 	}
 
 	archive->Close();

@@ -5,11 +5,11 @@ CXXFLAGS=-std=c++11 -g -Werror -Wextra -Wall
 CXX=g++
 CC=gcc
 
-all: clib7zip.so pylib7zip.so test test2
+all: clib7zip.so test test2
 
 clib7zip.so: clib7zip.o
 
-pylib7zip.so: pylib7zip.o clib7zip.o
+#pylib7zip.so: pylib7zip.o clib7zip.o
 
 test: test.o clib7zip.o cpplib7z.o
 	$(CC) $(LDFLAGS) -o $@ $^

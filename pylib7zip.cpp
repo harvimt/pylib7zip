@@ -59,22 +59,22 @@ extern "C" {
 	} p7z_Archive;
 
 	static void p7z_arc_del(p7z_Archive *self);
-	static PyObject* p7z_arc_getExt(p7z_Archive* self, void* closure);
 
 	static PyMethodDef p7z_Archive_Meth[] = {
 		{"close", p7z_arc_close, METH_VARARGS, "Close the archive"},
 		{NULL}  /* Sentinel */
 	};
 
-	static long int p7z_arc_Len(PyObject* self);
+	static long int p7z_arc_Len(p7z_Archive* self);
 
-	static PyObject* p7z_arc_GetItem(PyObject* self, long int index);
+	static PyObject* p7z_arc_GetItem(p7z_Archive* self, long int index);
+	static PyObject* p7z_arc_iter(p7z_Archive* self);
 
 	static PySequenceMethods p7z_arc_asSeq = {
-		p7z_arc_Len,      /* inquiry sq_length;             // __len__ */
+		(lenfunc) p7z_arc_Len,      /* inquiry sq_length;             // __len__ */
 		0,                /* binaryfunc sq_concat;          // __add__ */
 		0,                /* intargfunc sq_repeat;          // __mul__ */
-		p7z_arc_GetItem,  /* intargfunc sq_item;            // __getitem__ */
+		(ssizeargfunc) p7z_arc_GetItem,  /* intargfunc sq_item;            // __getitem__ */
 		0,                /* intintargfunc sq_slice;        // __getslice__ */
 		0,                /* intobjargproc sq_ass_item;     // __setitem__ */
 		0,                /* intintobjargproc sq_ass_slice; // __setslice__ */
@@ -101,13 +101,13 @@ extern "C" {
 		0,                         /* tp_getattro*/
 		0,                         /* tp_setattro*/
 		0,                         /* tp_as_buffer*/
-		Py_TPFLAGS_DEFAULT,        /* tp_flags*/ //TODO HAVE_ITER
+		Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_ITER | Py_TPFLAGS_BASETYPE, /* tp_flags*/ //TODO HAVE_ITER
 		"lib7zip Archive Object",  /* tp_doc */
 		0,                         /* tp_traverse */
 		0,                         /* tp_clear */
 		0,                         /* tp_richcompare */
 		0,                         /* tp_weaklistoffset */
-		0,                         /* tp_iter */
+		(getiterfunc) p7z_arc_iter,/* tp_iter */
 		0,                         /* tp_iternext */
 		p7z_Archive_Meth,          /* tp_methods */
 		0,                         /* tp_members */
@@ -122,22 +122,83 @@ extern "C" {
 		PyType_GenericNew,         /* tp_new */
 		};
 
+	//ArchiveIterator
+	typedef struct {
+		PyObject_HEAD
+		p7z_Archive* archive;
+		long unsigned int index;
+		unsigned int item_count;
+	} p7z_ArchiveIter;
+
+	static void p7z_arciter_del(p7z_ArchiveIter *self);
+	static PyObject* p7z_arciter_iter(p7z_ArchiveIter *self);
+	static PyObject* p7z_arciter_iternext(p7z_ArchiveIter *self);
+
+	static PyTypeObject p7z_ArchiveIter_Type = {
+		PyObject_HEAD_INIT(NULL)
+			0,                     /* ob_size*/
+		"lib7zip.ArchiveIterator", /* tp_name*/
+		sizeof(p7z_ArchiveIter),       /* tp_basicsize*/
+		0,                         /* tp_itemsize*/
+		(destructor)p7z_arciter_del, /* tp_dealloc*/
+		0,                         /* tp_print*/
+		0,                         /* tp_getattr*/
+		0,                         /* tp_setattr*/
+		0,                         /* tp_compare*/
+		0,                         /* tp_repr*/
+		0,                         /* tp_as_number*/
+		0,                         /* tp_as_sequence*/
+		0,                         /* tp_as_mapping*/
+		0,                         /* tp_hash */
+		0,                         /* tp_call*/
+		0,                         /* tp_str*/
+		0,                         /* tp_getattro*/
+		0,                         /* tp_setattro*/
+		0,                         /* tp_as_buffer*/
+		Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
+		"lib7zip Archive Iterator Object",  /* tp_doc */
+		0,                         /* tp_traverse */
+		0,                         /* tp_clear */
+		0,                         /* tp_richcompare */
+		0,                         /* tp_weaklistoffset */
+		(getiterfunc) p7z_arciter_iter,    /* tp_iter */
+		(getiterfunc) p7z_arciter_iternext,/* tp_iternext */
+		0,                         /* tp_methods */
+		0,                         /* tp_members */
+		0,                         /* tp_getset */
+		0,                         /* tp_base */
+		0,                         /* tp_dict */
+		0,                         /* tp_descr_get */
+		0,                         /* tp_descr_set */
+		0,                         /* tp_dictoffset */
+		0,                         /* tp_init */
+		PyType_GenericAlloc,       /* tp_alloc */
+		PyType_GenericNew,         /* tp_new */
+	};
+
 	//ArchiveItem
 	typedef struct {
 		PyObject_HEAD
 		C7ZipArchiveItem *archive_item_obj;
 	} p7z_ArchiveItem;
 
+	static void p7z_arcitem_del(p7z_ArchiveItem *self);
 	static PyObject* p7z_arcitem_isDir(p7z_ArchiveItem *self, void *closure);
 	static PyObject* p7z_arcitem_getpath(p7z_ArchiveItem *self, void *closure);
 	static PyObject* p7z_arcitem_getsize(p7z_ArchiveItem *self, void *closure);
 	static PyObject* p7z_arcitem_isencrypted(p7z_ArchiveItem *self, void *closure);
+	static PyObject* p7z_arcitem_getchecksum(p7z_ArchiveItem *self, void *closure);
+	static PyObject* p7z_arcitem_getcrc(p7z_ArchiveItem *self, void *closure);
+	static PyObject* p7z_arcitem_getindex(p7z_ArchiveItem *self, void *closure);
 
 	static PyGetSetDef p7z_arcitem_GetSet[] = {
 		{"isdir",  (getter)p7z_arcitem_isDir, NULL, "Return True if item is a directory and False otherwise.", NULL},
 		{"path",   (getter)p7z_arcitem_getpath, NULL, "file path.", NULL},
 		{"size",   (getter)p7z_arcitem_getsize, NULL, "file size.", NULL},
-		{"isencrypted",(getter)p7z_arcitem_isencrypted, NULL, "file size.", NULL},
+		{"isencrypted",(getter)p7z_arcitem_isencrypted, NULL, "Whether the file is encrypted (and requires a password to extract)", NULL},
+		{"index",(getter)p7z_arcitem_getindex, NULL, "The index of the item in the archive.", NULL},
+		{"checksum",(getter)p7z_arcitem_getchecksum, NULL, "The file's checksum.", NULL},
+		{"crc",(getter)p7z_arcitem_getcrc, NULL, "The file's CRC.", NULL},
 		{NULL} //Sentinel
 	};
 
@@ -145,9 +206,9 @@ extern "C" {
 		PyObject_HEAD_INIT(NULL)
 			0,                     /* ob_size*/
 		"lib7zip.ArchiveItem",     /* tp_name*/
-		sizeof(p7z_Archive),       /* tp_basicsize*/
+		sizeof(p7z_ArchiveItem),   /* tp_basicsize*/
 		0,                         /* tp_itemsize*/
-		(destructor)p7z_arc_del,   /* tp_dealloc*/
+		(destructor)p7z_arcitem_del, /* tp_dealloc*/
 		0,                         /* tp_print*/
 		0,                         /* tp_getattr*/
 		0,                         /* tp_setattr*/
@@ -213,6 +274,9 @@ extern "C" {
 			Py_INCREF(&p7z_Archive_Type);
 			PyModule_AddObject(m, "Archive", (PyObject*)&p7z_Archive_Type);
 
+			Py_INCREF(&p7z_ArchiveIter_Type);
+			//PyModule_AddObject(m, "ArchiveIterator", (PyObject*)&p7z_ArchiveIter_Type);
+
 			Py_INCREF(&p7z_ArchiveItem_Type);
 			PyModule_AddObject(m, "ArchiveItem", (PyObject*)&p7z_ArchiveItem_Type);
 
@@ -236,7 +300,7 @@ extern "C" {
 		FILE* file = fopen(filename, "rb");
 
 		if(!file){
-			PyErr_SetString(PyExc_IOError, "Failed to open file");
+			PyErr_SetFromErrnoWithFilename(PyExc_IOError, filename);
 			return NULL;
 		}
 
@@ -254,7 +318,7 @@ extern "C" {
 	}
 
 	static void p7z_arc_del(p7z_Archive *self){
-		delete ((p7z_Archive*)self)->archive_obj;
+		delete self->archive_obj;
 		self->ob_type->tp_free((PyObject*)self);
 	}
 
@@ -262,26 +326,24 @@ extern "C" {
 		Py_RETURN_NONE;
 	}
 
-	static int long p7z_arc_Len(PyObject* self)
+	static int long p7z_arc_Len(p7z_Archive* self)
 	{
-		p7z_Archive* _self = (p7z_Archive*) self;
 		unsigned int item_count;
-		CHECK_CALL_R(_self->archive_obj->GetItemCount(&item_count), "GetItemCount failed", -1);
+		CHECK_CALL_R(self->archive_obj->GetItemCount(&item_count), "GetItemCount failed", -1);
 		return item_count;
 	}
 
 	static PyObject*
-	p7z_arc_GetItem(PyObject* self, long int index){
-		p7z_Archive* _self = (p7z_Archive*) self;
+	p7z_arc_GetItem(p7z_Archive* self, long int index){
 		unsigned int item_count;
-		CHECK_CALL(_self->archive_obj->GetItemCount(&item_count), "GetItemCount failed");
+		CHECK_CALL(self->archive_obj->GetItemCount(&item_count), "GetItemCount failed");
 
 		if(index >= item_count){
 			PyErr_SetString(PyExc_IndexError, "Index out of range");
 		}
 
 		C7ZipArchiveItem* item;
-		CHECK_CALL(_self->archive_obj->GetItemInfo(index, &item), "GetItemInfo failed");
+		CHECK_CALL(self->archive_obj->GetItemInfo(index, &item), "GetItemInfo failed");
 		if(item == NULL){
 			PyErr_SetString(UnknownError, "NULL Pointer");
 		}
@@ -292,6 +354,11 @@ extern "C" {
 		_item->archive_item_obj = item;
 
 		return (PyObject*) _item;
+	}
+
+	static void p7z_arcitem_del(p7z_ArchiveItem *self){
+		//delete self->archive_item_obj; //deleteing an Archive deletes all it's Items
+		self->ob_type->tp_free((PyObject*)self);
 	}
 
 	static PyObject*
@@ -313,4 +380,73 @@ extern "C" {
 	p7z_arcitem_isencrypted(p7z_ArchiveItem *self, void *closure){
 		return Py_BuildValue("b", self->archive_item_obj->IsEncrypted());
 	}
+
+	static PyObject*
+	p7z_arcitem_getindex(p7z_ArchiveItem *self, void *closure){
+		return Py_BuildValue("k", self->archive_item_obj->GetArchiveIndex());
+	}
+
+	#define GET_UINT64_PROP(funcname, propid) \
+	static PyObject* \
+	p7z_arcitem_##funcname(p7z_ArchiveItem *self, void *closure){\
+		unsigned __int64 val; \
+		if(!self->archive_item_obj->GetUInt64Property(propid, val)){ \
+			Py_RETURN_NONE; \
+		}else{ \
+			return Py_BuildValue("K", val); \
+		}\
+	}
+
+	GET_UINT64_PROP(getchecksum, kpidChecksum);
+
+	GET_UINT64_PROP(getcrc, kpidCRC);
+
+	//Iterator
+	static void p7z_arciter_del(p7z_ArchiveIter *self){
+		Py_XDECREF(self->archive);
+		self->ob_type->tp_free((PyObject*)self);
+	}
+
+	static PyObject* p7z_arciter_iter(p7z_ArchiveIter *self){
+		Py_INCREF(self);
+		return (PyObject*)self;
+	}
+
+	static PyObject* p7z_arciter_iternext(p7z_ArchiveIter *self){
+
+		C7ZipArchiveItem* item;
+
+		if (self->index >= self->item_count){
+			PyErr_SetNone(PyExc_StopIteration);
+			return NULL;
+		}
+
+		CHECK_CALL(self->archive->archive_obj->GetItemInfo(self->index, &item), "GetItemInfo failed");
+		if(item == NULL){
+			PyErr_SetString(UnknownError, "NULL Pointer");
+		}
+
+		p7z_ArchiveItem* _item = (p7z_ArchiveItem*) p7z_ArchiveItem_Type.tp_new(&p7z_ArchiveItem_Type, NULL, NULL);
+		Py_INCREF(_item);
+
+		_item->archive_item_obj = item;
+
+		self->index += 1;
+
+		return (PyObject*) _item;
+	}
+
+	static PyObject* p7z_arc_iter(p7z_Archive *self){
+		p7z_ArchiveIter * iter = (p7z_ArchiveIter*) p7z_ArchiveIter_Type.tp_new(&p7z_ArchiveIter_Type, NULL, NULL);
+		Py_INCREF(iter);
+
+		Py_INCREF(self);
+		iter->archive = self;
+		iter->index = 0;
+
+		CHECK_CALL(self->archive_obj->GetItemCount(&(iter->item_count)), "Failed to get item count.");
+
+		return (PyObject*) iter;
+	}
+
 }
