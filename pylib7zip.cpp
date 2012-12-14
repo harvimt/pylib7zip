@@ -128,10 +128,10 @@ extern "C" {
 		C7ZipArchiveItem *archive_item_obj;
 	} p7z_ArchiveItem;
 
-	PyObject* p7z_arcitem_isDir(p7z_ArchiveItem *self, void *closure);
-	PyObject* p7z_arcitem_getpath(p7z_ArchiveItem *self, void *closure);
-	PyObject* p7z_arcitem_getsize(p7z_ArchiveItem *self, void *closure);
-	PyObject* p7z_arcitem_isencrypted(p7z_ArchiveItem *self, void *closure);
+	static PyObject* p7z_arcitem_isDir(p7z_ArchiveItem *self, void *closure);
+	static PyObject* p7z_arcitem_getpath(p7z_ArchiveItem *self, void *closure);
+	static PyObject* p7z_arcitem_getsize(p7z_ArchiveItem *self, void *closure);
+	static PyObject* p7z_arcitem_isencrypted(p7z_ArchiveItem *self, void *closure);
 
 	static PyGetSetDef p7z_arcitem_GetSet[] = {
 		{"isdir",  (getter)p7z_arcitem_isDir, NULL, "Return True if item is a directory and False otherwise.", NULL},
@@ -262,10 +262,6 @@ extern "C" {
 		Py_RETURN_NONE;
 	}
 
-	//static PyObject* p7z_arc_getExt(p7z_Archive* self, void* closure){
-		//const wchar_t *  = self->archive_obj->GetExt().c_str();
-	//}
-
 	static int long p7z_arc_Len(PyObject* self)
 	{
 		p7z_Archive* _self = (p7z_Archive*) self;
@@ -298,22 +294,22 @@ extern "C" {
 		return (PyObject*) _item;
 	}
 
-	PyObject*
+	static PyObject*
 	p7z_arcitem_isDir(p7z_ArchiveItem *self, void *closure){
 		return Py_BuildValue("b", self->archive_item_obj->IsDir());
 	}
 
-	PyObject*
+	static PyObject*
 	p7z_arcitem_getpath(p7z_ArchiveItem *self, void *closure){
 		return Py_BuildValue("u", self->archive_item_obj->GetFullPath().c_str());
 	}
 
-	PyObject*
+	static PyObject*
 	p7z_arcitem_getsize(p7z_ArchiveItem *self, void *closure){
 		return Py_BuildValue("K", self->archive_item_obj->GetSize());
 	}
 
-	PyObject*
+	static PyObject*
 	p7z_arcitem_isencrypted(p7z_ArchiveItem *self, void *closure){
 		return Py_BuildValue("b", self->archive_item_obj->IsEncrypted());
 	}
