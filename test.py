@@ -5,13 +5,15 @@ sys.path.append('./build/lib.linux-x86_64-2.7/')
 import lib7zip
 #lib7zip.system("ls")
 
-print("hello");
+#print("hello");
 archive = lib7zip.openarchive("/media/Media/Games/Game Mods/oblivion/Bash Installers/(MBP) 2ched 180 fix.7z");
 print("opened archive successfully");
 
-print("testing item index %d" % archive[5]);
+print("There are %d item(s) in the archive." % len(archive));
 
-print("There are %d item in the archive" % len(archive));
+for i in range(0,len(archive)):
+	item = archive[i]
+	print("%d  %s%s  %d  %s" % (i, "D" if item.isdir else "F", "E" if item.isencrypted else "U", item.size, item.path));
 
 archive.close();
 
