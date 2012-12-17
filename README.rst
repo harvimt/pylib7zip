@@ -14,7 +14,7 @@ Dependencies
 * 7z.so/7z.dll from 7zip.org
 * my fork of lib7zip available on `bitbucket`_
 
-.. _bitbucket: http://google.com
+.. _bitbucket: https://bitbucket.org/infinull/lib7zip
 
 
 HowTo Use
