@@ -11,11 +11,14 @@ uses Windows COM+ conventions (and written in C++)
 
 Dependencies
 ============
-* 7z.so/7z.dll from 7zip.org
-* my fork of lib7zip available on `bitbucket`_
+* 7z.so/7z.dll from `7zip.org`_
+* my fork of `lib7zip`_ available on `bitbucket`_
+* `utf8-cpp`_ (utf8.h)
 
-.. _bitbucket: https://bitbucket.org/infinull/lib7zip
-
+.. _bitbucket: http://bitbucket.org/infinull/lib7zip
+.. _7zip.org: http://7zip.org
+.. _lib7zip: https://code.google.com/p/lib7zip/
+.. _utf8-cpp: http://utfcpp.sourceforge.net/
 
 HowTo Use
 =========
