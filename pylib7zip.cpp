@@ -55,12 +55,6 @@ extern "C" {
 	#define NEW_EXCEPTION(PTR, NAME) PTR = PyErr_NewException(MODULE_NAME "." NAME, NULL, NULL);\
 		Py_INCREF(PTR); PyModule_AddObject(m, NAME, PTR);
 
-	//Method Definitions
-	#define method_def(name) static PyObject * name(PyObject *self, PyObject *args)
-
-	method_def(openarchive);
-	method_def(p7z_arc_close);
-
 	//Type/Object Definitions
 	
 	// Archive
@@ -70,10 +64,11 @@ extern "C" {
 		C7ZipArchive *archive_obj;
 	} p7z_Archive;
 
+	static PyObject* p7z_arc_close(p7z_Archive* self, PyObject* args);
 	static void p7z_arc_del(p7z_Archive *self);
 
 	static PyMethodDef p7z_Archive_Meth[] = {
-		{"close", p7z_arc_close, METH_VARARGS, "Close the archive"},
+		{"close", (PyCFunction) p7z_arc_close, METH_VARARGS, "Close the archive"},
 		{NULL}  /* Sentinel */
 	};
 
@@ -148,9 +143,9 @@ extern "C" {
 
 	static PyTypeObject p7z_ArchiveIter_Type = {
 		PyObject_HEAD_INIT(NULL)
-			0,                     /* ob_size*/
+		0,                         /* ob_size*/
 		"lib7zip.ArchiveIterator", /* tp_name*/
-		sizeof(p7z_ArchiveIter),       /* tp_basicsize*/
+		sizeof(p7z_ArchiveIter),   /* tp_basicsize*/
 		0,                         /* tp_itemsize*/
 		(destructor)p7z_arciter_del, /* tp_dealloc*/
 		0,                         /* tp_print*/
@@ -167,7 +162,7 @@ extern "C" {
 		0,                         /* tp_getattro*/
 		0,                         /* tp_setattro*/
 		0,                         /* tp_as_buffer*/
-		Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
+		Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
 		"lib7zip Archive Iterator Object",  /* tp_doc */
 		0,                         /* tp_traverse */
 		0,                         /* tp_clear */
@@ -258,51 +253,50 @@ extern "C" {
 
 	//Initialize Module
 
+	PyObject* clearmem(void);
+	PyObject* openarchive(PyObject* self, PyObject* args);
+
 	static PyMethodDef Lib7zMethods[] = {
 		{"openarchive",  openarchive, METH_VARARGS,
 			"Open the archive, return an Archive object."},
-		{NULL, NULL, 0, NULL}        /* Sentinel */
+		{"clearmem",  (PyCFunction) clearmem, METH_NOARGS,
+			"Reinitialize the Library to clear it's memory."},
+		{NULL, NULL, 0, NULL}/* Sentinel */
 	};
 
-	PyMODINIT_FUNC
-		initlib7zip(void)
-		{
-			PyObject *m;
+	PyMODINIT_FUNC initlib7zip(void) {
+		PyObject *m;
 
-			//Create Types/Objects
-			
-			if (PyType_Ready(&p7z_Archive_Type) < 0)
-				return;
+		//Create Types/Objects
+		if (PyType_Ready(&p7z_Archive_Type) < 0) return;
+		if (PyType_Ready(&p7z_ArchiveItem_Type) < 0) return;
 
-			if (PyType_Ready(&p7z_ArchiveItem_Type) < 0)
-				return;
+		//Initialize Module
+		m = Py_InitModule("lib7zip", Lib7zMethods);
+		if (m == NULL) return;
 
-			//Initialize Module
-			m = Py_InitModule("lib7zip", Lib7zMethods);
-			if (m == NULL) return;
+		//INCREF/AddObject Types/Objects
 
-			//INCREF/AddObject Types/Objects
+		Py_INCREF(&p7z_Archive_Type);
+		PyModule_AddObject(m, "Archive", (PyObject*)&p7z_Archive_Type);
 
-			Py_INCREF(&p7z_Archive_Type);
-			PyModule_AddObject(m, "Archive", (PyObject*)&p7z_Archive_Type);
+		Py_INCREF(&p7z_ArchiveIter_Type);
+		//PyModule_AddObject(m, "ArchiveIterator", (PyObject*)&p7z_ArchiveIter_Type); //FIXME, this causes segfaults, but I don't know why
 
-			Py_INCREF(&p7z_ArchiveIter_Type);
-			//PyModule_AddObject(m, "ArchiveIterator", (PyObject*)&p7z_ArchiveIter_Type);
+		Py_INCREF(&p7z_ArchiveItem_Type);
+		PyModule_AddObject(m, "ArchiveItem", (PyObject*)&p7z_ArchiveItem_Type);
 
-			Py_INCREF(&p7z_ArchiveItem_Type);
-			PyModule_AddObject(m, "ArchiveItem", (PyObject*)&p7z_ArchiveItem_Type);
+		//Create Exceptions
+		NEW_EXCEPTION(UnknownError, "UnknownError");
+		NEW_EXCEPTION(NotInitialized, "NotInitialized");
+		NEW_EXCEPTION(NeedsPassword, "NeedsPassword");
+		NEW_EXCEPTION(NotSupportedArchive, "NotSupportedArchive");
 
-			//Create Exceptions
-			NEW_EXCEPTION(UnknownError, "UnknownError");
-			NEW_EXCEPTION(NotInitialized, "NotInitialized");
-			NEW_EXCEPTION(NeedsPassword, "NeedsPassword");
-			NEW_EXCEPTION(NotSupportedArchive, "NotSupportedArchive");
+		//lib7zip Initialize
+		lib.Initialize();
+	}
 
-			//lib7zip Initialize
-			lib.Initialize();
-		}
-
-	method_def(openarchive) {
+	PyObject* openarchive(PyObject* self, PyObject* args) {
 		char* filename;
 
 		if (!PyArg_ParseTuple(args, "s", &filename)){
@@ -329,24 +323,24 @@ extern "C" {
 		return (PyObject*) arc_obj;
 	}
 
-	static void p7z_arc_del(p7z_Archive *self){
+	static void p7z_arc_del(p7z_Archive *self) {
 		delete self->archive_obj;
 		self->ob_type->tp_free((PyObject*)self);
 	}
 
-	method_def(p7z_arc_close){
+	static PyObject* p7z_arc_close(p7z_Archive* self, PyObject* args) {
+		self->archive_obj->Close();
 		Py_RETURN_NONE;
 	}
 
-	static int long p7z_arc_Len(p7z_Archive* self)
-	{
+	static int long p7z_arc_Len(p7z_Archive* self) {
 		unsigned int item_count;
 		CHECK_CALL_R(self->archive_obj->GetItemCount(&item_count), "GetItemCount failed", -1);
 		return item_count;
 	}
 
 	static PyObject*
-	p7z_arc_GetItem(p7z_Archive* self, long int index){
+	p7z_arc_GetItem(p7z_Archive* self, long int index) {
 		unsigned int item_count;
 		CHECK_CALL(self->archive_obj->GetItemCount(&item_count), "GetItemCount failed");
 
@@ -368,33 +362,33 @@ extern "C" {
 		return (PyObject*) _item;
 	}
 
-	static void p7z_arcitem_del(p7z_ArchiveItem *self){
+	static void p7z_arcitem_del(p7z_ArchiveItem *self) {
 		//delete self->archive_item_obj; //deleteing an Archive deletes all it's Items
 		self->ob_type->tp_free((PyObject*)self);
 	}
 
 	static PyObject*
-	p7z_arcitem_isDir(p7z_ArchiveItem *self, void *closure){
+	p7z_arcitem_isDir(p7z_ArchiveItem *self, void *closure) {
 		return Py_BuildValue("b", self->archive_item_obj->IsDir());
 	}
 
 	static PyObject*
-	p7z_arcitem_getpath(p7z_ArchiveItem *self, void *closure){
+	p7z_arcitem_getpath(p7z_ArchiveItem *self, void *closure) {
 		return Py_BuildValue("u", self->archive_item_obj->GetFullPath().c_str());
 	}
 
 	static PyObject*
-	p7z_arcitem_getsize(p7z_ArchiveItem *self, void *closure){
+	p7z_arcitem_getsize(p7z_ArchiveItem *self, void *closure) {
 		return Py_BuildValue("K", self->archive_item_obj->GetSize());
 	}
 
 	static PyObject*
-	p7z_arcitem_isencrypted(p7z_ArchiveItem *self, void *closure){
+	p7z_arcitem_isencrypted(p7z_ArchiveItem *self, void *closure) {
 		return Py_BuildValue("b", self->archive_item_obj->IsEncrypted());
 	}
 
 	static PyObject*
-	p7z_arcitem_getindex(p7z_ArchiveItem *self, void *closure){
+	p7z_arcitem_getindex(p7z_ArchiveItem *self, void *closure) {
 		return Py_BuildValue("k", self->archive_item_obj->GetArchiveIndex());
 	}
 
@@ -414,17 +408,17 @@ extern "C" {
 	GET_UINT64_PROP(getcrc, kpidCRC);
 
 	//Iterator
-	static void p7z_arciter_del(p7z_ArchiveIter *self){
+	static void p7z_arciter_del(p7z_ArchiveIter *self) {
 		Py_XDECREF(self->archive);
 		self->ob_type->tp_free((PyObject*)self);
 	}
 
-	static PyObject* p7z_arciter_iter(p7z_ArchiveIter *self){
+	static PyObject* p7z_arciter_iter(p7z_ArchiveIter *self) {
 		Py_INCREF(self);
 		return (PyObject*)self;
 	}
 
-	static PyObject* p7z_arciter_iternext(p7z_ArchiveIter *self){
+	static PyObject* p7z_arciter_iternext(p7z_ArchiveIter *self) {
 
 		C7ZipArchiveItem* item;
 
@@ -448,7 +442,7 @@ extern "C" {
 		return (PyObject*) _item;
 	}
 
-	static PyObject* p7z_arc_iter(p7z_Archive *self){
+	static PyObject* p7z_arc_iter(p7z_Archive *self) {
 		p7z_ArchiveIter * iter = (p7z_ArchiveIter*) p7z_ArchiveIter_Type.tp_new(&p7z_ArchiveIter_Type, NULL, NULL);
 		Py_INCREF(iter);
 
@@ -459,6 +453,12 @@ extern "C" {
 		CHECK_CALL(self->archive_obj->GetItemCount(&(iter->item_count)), "Failed to get item count.");
 
 		return (PyObject*) iter;
+	}
+
+	PyObject* clearmem() {
+		lib.Deinitialize();
+		CHECK_CALL(lib.Initialize(), "Failed to Re-Initialize 7zip Library");
+		Py_RETURN_NONE;
 	}
 
 }

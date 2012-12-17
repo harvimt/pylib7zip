@@ -9,6 +9,18 @@ pylib7zip is a binding for the c++ api lib7zip
 which is in turn a wrapper over 7z.so/7z.dll which is a C API that
 uses Windows COM+ conventions (and written in C++)
 
+Dependencies
+============
+* 7z.so/7z.dll from 7zip.org
+* my fork of lib7zip available on `bitbucket`_
+
+.. _bitbucket: http://google.com
+
+
+HowTo Use
+=========
+See test.py for an example, currently only getting (some) info from archives is supported
+
 License
 =======
 This code is licensed under the BSD 2-clause license.

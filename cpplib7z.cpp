@@ -36,7 +36,6 @@ C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename)
 	calc_size();
 }
 
-
 C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (FILE* fd, const wstring ext) : m_fd(fd), m_ext(ext) {
 	calc_size();
 }
@@ -80,7 +79,6 @@ int C7ZipInStreamFWrapper::Read(void *data, unsigned int size, unsigned int *pro
 	return 0;
 }
 
-
 int C7ZipInStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigned __int64 *newPosition) {
 	if(!m_fd) return 1;
 	if (seekOrigin > 2) {
@@ -103,12 +101,10 @@ int C7ZipInStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigne
 	return 0;
 }
 
-
 int C7ZipInStreamFWrapper::GetSize(unsigned __int64 * size) {
 	if(size) *size = m_size;
 	return 0;
 }
-
 
 // Out Stream (FD)
 C7ZipOutStreamFWrapper::C7ZipOutStreamFWrapper (const string filename) {
@@ -127,7 +123,6 @@ C7ZipOutStreamFWrapper::~C7ZipOutStreamFWrapper() {
 	fclose(m_fd);
 }
 
-
 int C7ZipOutStreamFWrapper::Write(const void *data, unsigned int size, unsigned int *processedSize) {
 	int count = fwrite(data, 1, size, m_fd);
 	if(ferror(m_fd)) {
@@ -142,7 +137,6 @@ int C7ZipOutStreamFWrapper::Write(const void *data, unsigned int size, unsigned 
 
 	return 0;
 }
-
 
 int C7ZipOutStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigned __int64 *newPosition) {
 	if(!m_fd) return 1;
@@ -166,3 +160,4 @@ int C7ZipOutStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsign
 
 	return 0;
 }
+

@@ -88,3 +88,5 @@ class C7ZipOutStreamFWrapper : public C7ZipOutStream
 			return 0;
 		};
 };
+
+#endif
