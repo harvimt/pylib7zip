@@ -1,4 +1,3 @@
-#include <dlfcn.h>
 #include <lib7zip.h>
 #include <iostream>
 #include <cwchar>
@@ -29,8 +28,7 @@ int main()
 
 	C7ZipLibrary lib;
 	if(!lib.Initialize()) {
-		cerr << "Failed to Initialize Lib7Zip Library, errcode=" << LAST_ERR << endl;
-		cerr << COALESCE(dlerror(), "NO ERROR") << endl;
+		cerr << "Failed to Initialize Lib7Zip Library" << endl;
 		return 1;
 	}
 
@@ -45,14 +43,15 @@ int main()
 	}
 	cout << endl;
 
-	C7ZipInStreamFWrapper instream("/media/Media/Games/Game Mods/oblivion/Bash Installers/(MBP) 2ched 180 fix.7z");
+	C7ZipInStreamFWrapper instream("C:\\Users\\gkmachine\\Downloads\\zips\\www-r.zip");
+	//C7ZipInStreamFWrapper instream("/media/Media/Games/Game Mods/oblivion/Bash Installers/(MBP) 2ched 180 fix.7z");
 	//C7ZipInStreamFWrapper instream("/media/Media/Games/Game Mods/oblivion/Bash Installers/Better dungeons BSA v4.5-40392.rar");
 	//C7ZipInStreamFWrapper instream("/media/Media/Games/Game Mods/oblivion/Bash Installers/QTP3 Redimized.zip");
 
 	wcout << L"GetExt: " << instream.GetExt() << endl;
 
 	unsigned __int64 size;
-	if(instream.GetSize(&size) != S_OK) {
+	if(instream.GetSize(&size) != 0) {
 		cerr << "Error getting size of stream" << endl;
 		return 1;
 	}
@@ -102,7 +101,7 @@ int main()
 			cerr << "Failed to get size for item, #" << i << ", errcode=" << LAST_ERR << endl;
 		}
 
-		printf("%u\t%s\t%08llX\t%llu\t%ls\n", i, isdir?"D":"F", checksum, filesize, path.c_str());
+		wprintf(L"%u\t%s\t%08llX\t%llu\t%ls\n", i, isdir?L"D":L"F", checksum, filesize, path.c_str());
 
 		//delete item;
 	}

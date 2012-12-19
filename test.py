@@ -1,45 +1,33 @@
+#!/usr/bin/env python2
 
-import sys, os, os.path
-sys.path.append('./build/lib.linux-x86_64-2.7/')
+from ctypes import *
 
-import lib7zip
-from lib7zip import NotSupportedArchive
-#lib7zip.system("ls")
+dll7z = cdll.LoadLibrary("libc7zip.dll")
 
-BASE_PATH = "/media/Media/Games/Game Mods/oblivion/Bash Installers/"
+#initialize
+lib = c_void_p()
+lib = dll7z.create_C7ZipLibrary();
+dll7z.c7zLib_Initialize(lib);
 
-#archive = lib7zip.openarchive("foo");
+num_exts = c_ulong();
+ext_array = pointer(c_wchar_p())
+dll7z.c7zLib_GetSupportedExts(lib, byref(ext_array), byref(num_exts))
 
-#print("hello");
-for filename in os.listdir(BASE_PATH):
-	filename = os.path.join(BASE_PATH, filename)
-	#if not filename.endswith('.rar'): continue
-	if os.path.isdir(filename): continue
+print("Supported Extensions: " + ', '.join(str(ext_array[i]) for i in range(num_exts.value)))
 
-	print("opening %s" % filename);
+instream = dll7z.create_c7zInSt_Filename("C:\\Users\\gkmachine\\Downloads\\zips\\www-r.zip")
+ext = c_wchar_p(dll7z.c7zInSt_GetExt(instream))
+archive = c_void_p();
+dll7z.c7zLib_OpenArchive(lib, instream, byref(archive))
+print("Opened file, got extension %s" % ext.value)
 
-	try :
-		archive = lib7zip.openarchive(filename);
-	except NotSupportedArchive:
-		print("Archive not supported");
-		sys.exit(1);
-		continue
+item_count = c_ulong()
+dll7z.c7zArc_GetItemCount(archive, byref(item_count))
+print("%d items in archive" % item_count.value)
+for i in range(item_count.value):
+	item = c_void_p()
+	dll7z.c7z_Arc_GetItemInfo(archive, i, byref(item)
+	pass
 
-	print("opened archive successfully");
-
-	print("There are %d item(s) in the archive." % len(archive));
-
-	for item in archive:
-	#for i in range(0,len(archive)):
-		#item = archive[i]
-
-		print("%d  %s%s  % 10d  %08X  %s" % (item.index, "D" if item.isdir else "F", "E" if item.isencrypted else "U", item.size, item.crc or 0x0, item.path));
-
-	archive.close();
-
-#for item in archive:
-	#pass
-
-#("/media/Media/Games/Game Mods/oblivion/Bash Installers/Better dungeons BSA v4.5-40392.rar");
-#("/media/Media/Games/Game Mods/oblivion/Bash Installers/QTP3 Redimized.zip");
-
+dll7z.c7zLib_Deinitialize(lib);
+dll7z.free_C7ZipLibrary(lib);

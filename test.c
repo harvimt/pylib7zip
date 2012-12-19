@@ -1,4 +1,3 @@
-#include <dlfcn.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "clib7zip.h"
@@ -16,11 +15,6 @@ const char* COALESCE(const char* x, const char* y){ return x?x:y; }
 
 int main(){
 	c7z_Library* lib = create_C7ZipLibrary();
-	if (lib == NULL){
-		fprintf(stderr, "Failed to allocate C7zip Library\n");
-		fprintf(stderr, "dlerror() = %s", COALESCE(dlerror(), "NULL"));
-		return 1;
-	}
 
 	if(!c7zLib_Initialize(lib)){
 		fprintf(stderr, "Failed to Intialize C7zip Library, %s\n", LAST_ERR);
@@ -43,7 +37,7 @@ int main(){
 
 	free(exts);
 
-	c7z_InStream* instream = create_c7zInSt_Filename("/media/Media/Games/Game Mods/oblivion/Bash Installers/(MBP) 2ched 180 fix.7z");
+	c7z_InStream* instream = create_c7zInSt_Filename("C:\\Users\\gkmachine\\Downloads\\zips\\www-r.zip");
 	if(instream == NULL){
 		fprintf(stderr, "Error allocating input stream.\n");
 		return 1;
@@ -79,7 +73,7 @@ int main(){
 			//return 1;
 		}
 
-		if(!c7zItm_GetUInt64Property(arc_item, kpidChecksum, &hash)){
+		if(!c7zItm_GetUInt64Property(arc_item, kpidCRC, &hash)){
 			//fprintf(stderr, "Error Getting checksum for item %d, errcode=%s\n", i, LAST_ERR);
 			//return 1;
 		}
@@ -87,21 +81,8 @@ int main(){
 		isdir = c7zItm_IsDir(arc_item); //Note: you could use ...GetBoolProperty(..., kpidIsDir, ...) instead
 
 		const wchar_t* path = c7zItm_GetFullPath(arc_item); //Note: similar, could use GetStringProperty intstead
-
-		/*
-		wchar_t* path = L"#ERROR#";
-		if(!c7zItm_GetStringProperty(arc_item, kpidPath, &path)){
-			fprintf(stderr, "#ERROR#\n");
-			path = L"#ERROR#";
-			return 1;
-		}
-		*/
-
+		
 		printf("%03u\t%s\t%08llX\t%ls\n", i, isdir?"D":"F", hash, path);
-
-		//free(path);
-
-		free_C7ZipArchiveItem(arc_item);
 	}
 
 	c7zArc_Close(archive);

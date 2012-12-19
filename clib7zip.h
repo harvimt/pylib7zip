@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include <7zip/PropID.h>
+
 #if !__cplusplus
 #include <stdbool.h>
 #endif
@@ -90,7 +92,9 @@ bool c7zItm_GetBoolProperty(c7z_ArchiveItem* self, int propertyIndex, bool * val
 
 //InStream
 c7z_InStream* create_c7zInSt_Filename(const char* filename);
+void free_C7ZipInStream(c7z_InStream* stream);
 const wchar_t* c7zInSt_GetExt(c7z_InStream* self);
+
 int c7zInSt_Read(c7z_InStream* self, void *data, unsigned int size, unsigned int *processedSize);
 int c7zInSt_Seek(c7z_InStream* self, __int64 offset, unsigned int seekOrigin, unsigned __int64 *newPosition);
 int c7zInSt_GetSize(c7z_InStream* self, unsigned __int64 * size);
@@ -123,6 +127,7 @@ void free_C7ZipLibrary(c7z_Library* self);
 bool c7zLib_Initialize(c7z_Library* self);
 void c7zLib_Deinitialize(c7z_Library* self);
 bool c7zLib_GetSupportedExts(c7z_Library* self, const wchar_t *** exts, unsigned int * size);
+void free_extarr(const wchar_t** exts);
 bool c7zLib_OpenArchive(c7z_Library* self, c7z_InStream* pInStream, c7z_Archive ** ppArchive);
 bool c7zLib_IsInitialized(c7z_Library* self);
 ErrorCodeEnum c7zLib_GetLastError(c7z_Library* self);

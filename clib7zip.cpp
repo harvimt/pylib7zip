@@ -256,4 +256,8 @@ extern "C"
 		return static_cast<ErrorCodeEnum>( static_cast<C7ZipLibrary*>(self)->GetLastError() );
 	}
 
+	void free_extarr(const wchar_t** exts){ free(exts); }
+	void free_C7ZipInStream(c7z_InStream* stream){
+		delete static_cast<C7ZipInStream*>(stream);
+	}
 }//end extern "C"
