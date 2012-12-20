@@ -1,26 +1,20 @@
-#pragma once
-
-#include <lib7zip.h>
-#include <istream>
-#include <ostream>
 
 /**
- * Implementation of 7-Zip In Stream based on cstdio File-Pointers (FILE*)
+ * Implementation of 7-Zip In Stream based on C++ IO std::istream
  */
-class C7ZipInStreamFWrapper : public C7ZipInStream
+class C7ZipInStreamSWrapper : public C7ZipInStream
 {
 	private:
-		FILE* m_fd;
+		std::istream * m_stream;
 		wstring m_ext;
 		unsigned __int64 m_size;
-		bool owns_pointer;
 
 	public:
-		C7ZipInStreamFWrapper (const string filename);
+		C7ZipInStreamSWrapper (const string filename);
 
-		C7ZipInStreamFWrapper (FILE* fd, const wstring ext);
+		C7ZipInStreamSWrapper (std::istream * stream, const wstring ext);
 
-		virtual ~C7ZipInStreamFWrapper();
+		~C7ZipInStreamSWrapper();
 
 		wstring GetExt() const { return m_ext; }
 
@@ -32,20 +26,20 @@ class C7ZipInStreamFWrapper : public C7ZipInStream
 };
 
 /**
- * Implementation of 7-Zip Out Stream based on cstdio File-Pointers (FILE*)
+ * Implementation of 7-Zip Out Stream based on C++ IO std::ostream
  */
-class C7ZipOutStreamFWrapper : public C7ZipOutStream
+class C7ZipOutStreamSWrapper : public C7ZipOutStream
 {
 	private:
-		FILE * m_fd;
+		std::ostream * m_stream;
 		int m_size;
 
 	public:
-		C7ZipOutStreamFWrapper (const string filename);
+		C7ZipOutStreamSWrapper (const string filename);
 
-		C7ZipOutStreamFWrapper (FILE* fd);
+		C7ZipOutStreamSWrapper (std::ostream * stream);
 
-		virtual ~C7ZipOutStreamFWrapper();
+		~C7ZipOutStreamSWrapper();
 
 		int Write(const void *data, unsigned int size, unsigned int *processedSize);
 

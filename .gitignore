@@ -4,7 +4,7 @@
 *.so
 *.bcpp
 *.bchpp
-test
+test1
 test2
 *.cmake
 *.make

@@ -1,33 +1,40 @@
-#!/usr/bin/env python2
+from __future__ import unicode_literals
 
-from ctypes import *
+import sys
+import os, os.path
 
-dll7z = cdll.LoadLibrary("libc7zip.dll")
+mod = 'c'
+if mod == 'ctypes':
+	import ctypes_lib7zip as lib7zip
+	from ctyeps_lib7zip import NotSupportedArchive
+elif mod == 'c':
+	sys.path.append('./build/lib.linux-x86_64-2.7/')
+	import lib7zip as lib7zip
+	from lib7zip import NotSupportedArchive
+elif mod == 'sub':
+	import sub_lib7zip as lib7zip
+	from sub_lib7zip import NotSupportedArchive
 
-#initialize
-lib = c_void_p()
-lib = dll7z.create_C7ZipLibrary();
-dll7z.c7zLib_Initialize(lib);
 
-num_exts = c_ulong();
-ext_array = pointer(c_wchar_p())
-dll7z.c7zLib_GetSupportedExts(lib, byref(ext_array), byref(num_exts))
+BASE_PATH = "/media/Media/Games/Game Mods/oblivion/Bash Installers/"
 
-print("Supported Extensions: " + ', '.join(str(ext_array[i]) for i in range(num_exts.value)))
+#print("Supported Extensions: %s" % ', '.join(lib7zip.get_supported_exts()))
 
-instream = dll7z.create_c7zInSt_Filename("C:\\Users\\gkmachine\\Downloads\\zips\\www-r.zip")
-ext = c_wchar_p(dll7z.c7zInSt_GetExt(instream))
-archive = c_void_p();
-dll7z.c7zLib_OpenArchive(lib, instream, byref(archive))
-print("Opened file, got extension %s" % ext.value)
+for filename in os.listdir(BASE_PATH):
+	filename = os.path.join(BASE_PATH, filename)
+	if os.path.isdir(filename): continue
 
-item_count = c_ulong()
-dll7z.c7zArc_GetItemCount(archive, byref(item_count))
-print("%d items in archive" % item_count.value)
-for i in range(item_count.value):
-	item = c_void_p()
-	dll7z.c7z_Arc_GetItemInfo(archive, i, byref(item)
-	pass
+	print("::%s" % filename);
 
-dll7z.c7zLib_Deinitialize(lib);
-dll7z.free_C7ZipLibrary(lib);
+	try :
+		archive = lib7zip.openarchive(filename);
+	except NotSupportedArchive:
+		print("Archive not supported");
+		#sys.exit(1);
+		continue
+
+	for i,item in enumerate(archive):
+		pass
+
+		print((u"%04d  %s  %08X  %s" % (i, "D" if item.isdir else "F", item.crc or 0xdeadbeef, item.path)).encode('utf-8'));
+
