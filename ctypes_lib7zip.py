@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+print('Hello!')
 from ctypes import *
 import atexit
 
@@ -10,7 +11,10 @@ class NotSupportedArchive(Exception): pass
 
 #dll7z = cdll.LoadLibrary("libc7zip.dll")
 dll7z = cdll.LoadLibrary("libc7zip.so")
-range = xrange
+print('Loaded library')
+import sys
+if sys.version_info.major < 3:
+	range = xrange
 
 def raise_error(msg,check_none=False):
 	errcode = dll7z.c7zLib_GetLastError(lib)
@@ -23,10 +27,13 @@ def raise_error(msg,check_none=False):
 	else:
 		raise UnknownError(msg)
 
+
 lib = c_void_p()
 lib = dll7z.create_C7ZipLibrary();
+print('allocate')
 if not dll7z.c7zLib_Initialize(lib):
 	raise NotInitialize("Failed to initialize library")
+print('init')
 
 #property enum:
 kpidCRC = 27-8;
@@ -68,8 +75,10 @@ class Archive(object):
 		self.instream = instream
 	
 	def __del__(self):
+		dll7z.c7zArc_Close(self.archive)
+		dll7z.free_C7ZipArchive(self.archive)
 		dll7z.free_C7ZipInStream(self.instream)
-		
+
 	def __len__(self):
 		item_count = c_ulong()
 

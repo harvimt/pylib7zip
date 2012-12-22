@@ -13,7 +13,6 @@ class C7ZipInStreamFWrapper : public C7ZipInStream
 		FILE* m_fd;
 		wstring m_ext;
 		unsigned __int64 m_size;
-		bool owns_pointer;
 
 	public:
 		C7ZipInStreamFWrapper (const string filename);

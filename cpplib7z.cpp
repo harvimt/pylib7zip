@@ -7,11 +7,9 @@
 #include <utf8.h>//C++ UTF-8 Library
 #include "cpplib7z.h"
 
-
 // In Stream (FD)
 
-C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename)
-{
+C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename) {
 	using namespace utf8;
 	//Open file
 	m_fd = fopen(filename.c_str(), "rb");
@@ -34,7 +32,6 @@ C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (const string filename)
 	fseek(m_fd, 0L, SEEK_SET);
 }
 
-
 C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (FILE* fd, const wstring ext) : m_fd(fd), m_ext(ext) {
 	if(!m_fd) return;
 
@@ -46,12 +43,15 @@ C7ZipInStreamFWrapper::C7ZipInStreamFWrapper (FILE* fd, const wstring ext) : m_f
 
 C7ZipInStreamFWrapper::~C7ZipInStreamFWrapper()
 {
+	if(!m_fd) return;
+	//if(ferror(m_fd)) return;
+	//if(ftell(m_fd) < 0) return;
+
 	fclose(m_fd);
 }
 
 
-int C7ZipInStreamFWrapper::Read(void *data, unsigned int size, unsigned int *processedSize)
-{
+int C7ZipInStreamFWrapper::Read(void *data, unsigned int size, unsigned int *processedSize) {
 	if(!m_fd) return 1;
 
 	int count = fread(data, 1, size, m_fd);
@@ -65,9 +65,7 @@ int C7ZipInStreamFWrapper::Read(void *data, unsigned int size, unsigned int *pro
 	return 0;
 }
 
-
-int C7ZipInStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigned __int64 *newPosition)
-{
+int C7ZipInStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigned __int64 *newPosition) {
 	if(!m_fd) return 1;
 	if (seekOrigin > 2) {
 		return 1;
@@ -90,16 +88,13 @@ int C7ZipInStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigne
 }
 
 
-int C7ZipInStreamFWrapper::GetSize(unsigned __int64 * size)
-{
+int C7ZipInStreamFWrapper::GetSize(unsigned __int64 * size) {
 	if(size) *size = m_size;
 	return 0;
 }
 
-
 // Out Stream (FD)
-C7ZipOutStreamFWrapper::C7ZipOutStreamFWrapper (const string filename)
-{
+C7ZipOutStreamFWrapper::C7ZipOutStreamFWrapper (const string filename) {
 	m_fd = fopen(filename.c_str(), "wb");
 
 	//Get File Size
@@ -111,14 +106,12 @@ C7ZipOutStreamFWrapper::C7ZipOutStreamFWrapper (const string filename)
 
 C7ZipOutStreamFWrapper::C7ZipOutStreamFWrapper (FILE* fd): m_fd (fd) { }
 
-C7ZipOutStreamFWrapper::~C7ZipOutStreamFWrapper()
-{
+C7ZipOutStreamFWrapper::~C7ZipOutStreamFWrapper() {
 	fclose(m_fd);
 }
 
 
-int C7ZipOutStreamFWrapper::Write(const void *data, unsigned int size, unsigned int *processedSize)
-{
+int C7ZipOutStreamFWrapper::Write(const void *data, unsigned int size, unsigned int *processedSize) {
 	int count = fwrite(data, 1, size, m_fd);
 	if(ferror(m_fd)) {
 		return 1;
@@ -134,8 +127,7 @@ int C7ZipOutStreamFWrapper::Write(const void *data, unsigned int size, unsigned 
 }
 
 
-int C7ZipOutStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigned __int64 *newPosition)
-{
+int C7ZipOutStreamFWrapper::Seek(__int64 offset, unsigned int seekOrigin, unsigned __int64 *newPosition) {
 	if(!m_fd) return 1;
 
 	if (seekOrigin > 2) {

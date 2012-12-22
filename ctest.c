@@ -5,7 +5,6 @@
 #include <sys/types.h>
 #include <linux/limits.h>
 #include <string.h>
-
 #include <dirent.h>
 
 #ifndef _DIRENT_HAVE_D_TYPE
@@ -25,6 +24,8 @@ const char* COALESCE(const char* x, const char* y){ return x?x:y; }
 static c7z_Library* lib;
 
 int openarchive(const char* path){
+	printf("%s\n", path);
+
 	c7z_InStream* instream = create_c7zInSt_Filename(path);
 
 	if(instream == NULL){
@@ -38,8 +39,6 @@ int openarchive(const char* path){
 		return 1;
 	}
 	//printf("File Extension: %ls\n", ext);
-	
-
 
 	c7z_Archive* archive = NULL;
 	if(!c7zLib_OpenArchive(lib, instream, &archive) || archive == NULL){
@@ -73,8 +72,10 @@ int openarchive(const char* path){
 		isdir = c7zItm_IsDir(arc_item); //Note: you could use ...GetBoolProperty(..., kpidIsDir, ...) instead
 
 		const wchar_t* path = c7zItm_GetFullPath(arc_item); //Note: similar, could use GetStringProperty intstead
+		(void) isdir;
+		(void) path;
 		
-		printf("%03u  %c  %08llX  %ls\n", i, isdir?'D':'F', hash, path);
+		//printf("%03u  %c  %08llX  %ls\n", i, isdir?'D':'F', hash, path);
 	}
 
 	c7zArc_Close(archive);
@@ -124,7 +125,7 @@ int main(){
 			if(ep->d_type == DT_REG){
 				strncat(path,ep->d_name,PATH_MAX);
 				if(openarchive(path)){
-					return 1;
+					//return 1;
 				}
 			}
 		}

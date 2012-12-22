@@ -4,8 +4,8 @@
 *.so
 *.bcpp
 *.bchpp
-test1
-test2
+ctest
+cpptest
 *.cmake
 *.make
 *.internal
@@ -22,3 +22,5 @@ Makefile
 *.dll
 *.pyc
 *.exe
+bin
+__pycache__

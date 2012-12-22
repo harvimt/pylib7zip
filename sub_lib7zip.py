@@ -3,6 +3,13 @@
 exe7z = '/usr/bin/7za'
 import subprocess
 
+import sys
+if sys.version_info.major < 3:
+	range = xrange
+else:
+	unicode = str
+	long = int
+
 
 class UnknownError(Exception): pass
 class NotInitialize(Exception): pass
@@ -85,12 +92,12 @@ class Archive(object):
 		#wait for it to finish, (it should be finished by now)
 		#if error code is not zero, raise the errors we saved for later
 		if pipe.wait() != 0:
-			errors = (line for line in self.data.splitlines() if line.startswith('Error:'))
+			errors = (line for line in self.data.splitlines() if line.startswith(b'Error:'))
 			for error in errors:
-				if error.endswith('Can not open file as archive'):
-					raise NotSupportedArchive(error)
+				if error.endswith(b'Can not open file as archive'):
+					raise NotSupportedArchive(_unicode(error))
 				else:
-					raise Exception(error)
+					raise Exception(_unicode(error))
 
 	def __iter__(self):
 		errors = []
