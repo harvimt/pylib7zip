@@ -1,6 +1,6 @@
 python-lib7zip
 ==============
-Python bindings for `lib7zip`_
+Python bindings for lib7zip_
 
 This project is a Work-in-Progress and currently going through a rigorous
 valgrinding process to eliminate memory leaks and segmentation faults.
@@ -12,7 +12,7 @@ in C\++)
 Dependencies
 ------------
 
-    * 7z.so/7z.dll from http://7zip.org or p7zip on *Nix
+    * 7z.so/7z.dll from http://7zip.org or p7zip on \*Nix
     * my fork_ of lib7zip_ available on bitbucket
     * libc7zip has been moved to my fork of lib7zip
     * CFFI_
@@ -43,6 +43,6 @@ dynamically linked by default. The MPL allows static linking with non-mpl code
 (even proprietary fcode), so staticly linking lib7zip and pylib7zip together is
 possible (and potentially the best course of action for many projects).
 
-_CFFI:: https://cffi.readthedocs.org/en/release-0.6/
-_fork:: http://bitbucket.org/infinull/lib7zip
-_lib7ip:: http://code.google.com/p/lib7zip/
+.. _CFFI: https://cffi.readthedocs.org/en/release-0.6/
+.. _fork: http://bitbucket.org/infinull/lib7zip
+.. _lib7ip: http://code.google.com/p/lib7zip/
