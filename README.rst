@@ -1,6 +1,8 @@
 python-lib7zip
 ==============
 Python bindings for lib7zip_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:author: Mark Harviston <mark.harviston@gmail.com>
 
 This project is a Work-in-Progress and currently going through a rigorous
 valgrinding process to eliminate memory leaks and segmentation faults.
