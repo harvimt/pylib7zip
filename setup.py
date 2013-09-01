@@ -9,8 +9,9 @@ setup(
 	version=lib7zip.__version__,
 	author=author.group('name'),
 	author_email=author.group('email'),
-	py_modules=['lib7zip', ],
 	license=lib7zip.__license__,
 	description=lib7zip.__doc__,
 	long_description=open('README.txt').read(),
+	#build settings
+	py_modules=['lib7zip', ],
 )
