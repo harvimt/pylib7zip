@@ -56,127 +56,109 @@ def get_prop(idx, propid, get_fn, prop_name, convert, istype=None):
 
 	assert get_fn(idx, propid, as_pvar) == wintypes.S_OK
 
+	if as_pvar.vt in (wintypes.VT_EMPTY, wintypes.VT_NULL):
+		#log.debug('NULL or empty')
+		return None
+		
 	if istype is not None:
 		#log.debug('vt: {:d}'.format(as_pvar.vt))
 		assert as_pvar.vt == istype
-
-	if as_pvar.vt in (wintypes.VT_EMPTY, wintypes.VT_NULL):
-		log.debug('NULL or empty')
-		return None
 
 	return convert(getattr(as_pvar, prop_name))
 	#ole32.PropVariantClear(tmp_pvar)
 	return r
 
+get_bytes_prop = partial(get_prop, prop_name='pcVal', istype=wintypes.VT_BSTR, convert=ffi.string)
 get_string_prop = partial(get_prop, prop_name='bstrVal', istype=wintypes.VT_BSTR, convert=ffi.string)
 get_classid = partial(get_prop, prop_name='puuid', istype=wintypes.VT_BSTR, convert=guidp2uuid)
 get_hex_prop = partial(get_prop, prop_name='uintVal', istype=wintypes.VT_UI4, convert=lambda x: hex(int(x)))
 get_bool_prop = partial(get_prop, prop_name='bVal', istype=wintypes.VT_BOOL, convert=lambda x: x != 0)
 
-Format = namedtuple('Format', ('classid', 'extensions', 'index'))
-class Library():
-	def __init__(self):
-		self.formats = self._get_format_info()
-		self.methods = self._get_method_info()
-	
-	def destroy(self):
-		pass
-	
-	def __enter__(self, *args, **kwargs):
-		pass
-	
-	def __exit__(self, *args, **kwargs):
-		self.destroy()
-	
-	def __del__(self):
-		self.destroy()
-	
-	def _get_format_info(self):
-		num_formats = ffi.new("uint32_t*")
-		assert dll7z.GetNumberOfFormats(num_formats) == S_OK
-		assert num_formats != ffi.NULL
+Format = namedtuple('Format', ('classid', 'extensions', 'index', 'start_signature'))
 
-		return {
-			get_string_prop(i, FormatProps.kName, dll7z.GetHandlerProperty2): Format(
-				classid=get_classid(i, FormatProps.kClassID, dll7z.GetHandlerProperty2),
-				extensions=tuple(get_string_prop(i, FormatProps.kExtension, dll7z.GetHandlerProperty2).split()),
-				index=i,
-			)
-			for i in range(num_formats[0])
-		}
-	
-	def _get_method_info(self):
-		#TODO
-		pass
+def get_format_info():
+	num_formats = ffi.new("uint32_t*")
+	assert dll7z.GetNumberOfFormats(num_formats) == S_OK
+	assert num_formats != ffi.NULL
 
-@ffi.callback('HRESULT(void* self, uint32_t *numMethods)')
-def get_number_of_methods(self, numMethods):
-	log.debug('get_number_of_methods')
-	return dll7z.GetNumberOfMethods(numMethods)
+	return {
+		get_string_prop(i, FormatProps.kName, dll7z.GetHandlerProperty2):
+		Format(
+			classid=get_classid(i, FormatProps.kClassID, dll7z.GetHandlerProperty2),
+			extensions=tuple(get_string_prop(i, FormatProps.kExtension, dll7z.GetHandlerProperty2).split()),
+			index=i,
+			start_signature=get_bytes_prop(i, FormatProps.kStartSignature, dll7z.GetHandlerProperty2),
+		)
+		for i in range(num_formats[0])
+	}
 
-@ffi.callback('HRESULT(void* self, uint32_t index, PROPID propID, PROPVARIANT *value)')
-def get_method_property(self, index, propID, value):
-	#log.debug('get_method_property')
-	return dll7z.GetMethodProperty(index, propID, value);
-	
-@ffi.callback('HRESULT(void* self, uint32_t index, const GUID *iid, void **coder)')
-def create_decoder(self, index, iid, coder):
-	log.debug('create decoder')
-	classid = get_prop(
-		index,
-		py7ziptypes.MethodProps.kDecoder,
-		dll7z.GetMethodProperty,
-		istype=VT_BSTR)
+formats = get_format_info()
+max_sig_size = max(len(f.start_signature) for f in formats.values())
+#methods = get_method_info()
 
-	#TODO check if decoder assigned
-	return dll7z.CreateObject(classid.puuid, iid, coder)
-	
-@ffi.callback('HRESULT(void* self, uint32_t index, const GUID *iid, void **coder)')
-def create_encoder(self, index, iid, coder):
-	log.debug('create encoder')
-	classid = get_prop(
-		index,
-		py7ziptypes.MethodProps.kEncoder,
-		dll7z.GetMethodProperty,
-		istype=VT_BSTR)
-
-	#TODO check if encoder assigned
-	return dll7z.CreateObject(classid.puuid, iid, coder)
-
+from .extract_callback import ArchiveExtractCallback
 from .open_callback import ArchiveOpenCallback
 from .stream import FileInStream
 
+def RNOK(status):
+	""" raise error if not S_OK """
+	assert int(status) == S_OK
+
+def uu2guidp(uu):
+	return ffi.new('GUID*', uu.bytes_le)
+
 class Archive:
-	def __init__(self, lib, filename):
-		format = lib.formats['7z']
+	def __init__(self, filename, forcetype=None, password=None):
 		self.tmp_archive = ffi.new('void**')
-		
-		classid = ffi.new('GUID*', format.classid.bytes_le)
-		iid = ffi.new('GUID*', py7ziptypes.IID_IInArchive.bytes_le)
-		assert dll7z.CreateObject(classid, iid, self.tmp_archive) == S_OK
-		assert self.tmp_archive[0] != ffi.NULL
-		self.archive = archive = ffi.cast('IInArchive*', self.tmp_archive[0])
-		
-		## -- ##
+		iid = uu2guidp(py7ziptypes.IID_IInArchive)
+
 		self.stream = FileInStream(filename)
 		stream_inst = self.stream.instances[py7ziptypes.IID_IInStream]
 		
-		callback = ArchiveOpenCallback(stream=stream_inst)
+		if forcetype is not None:
+			format = formats[forcetype]
+		else:
+			format = self._guess_format()
+			
+		classid = uu2guidp(format.classid)
+		
+		RNOK(dll7z.CreateObject(classid, iid, self.tmp_archive))
+		assert self.tmp_archive[0] != ffi.NULL
+		self.archive = archive = ffi.cast('IInArchive*', self.tmp_archive[0])
+		
+		callback = ArchiveOpenCallback(password=password)
 		callback_inst = callback.instances[py7ziptypes.IID_IArchiveOpenCallback]
 		
 		maxCheckStartPosition = ffi.new('uint64_t*', 1 << 22)
-		#input()
-		callback_inst = ffi.NULL
-		assert archive.vtable.Open(archive, stream_inst, maxCheckStartPosition, callback_inst) == S_OK
+		RNOK(archive.vtable.Open(archive, stream_inst, maxCheckStartPosition, callback_inst))
 		self.itm_prop_fn = partial(archive.vtable.GetProperty, archive)
+	
+	def _guess_format(self):
+		file = self.stream.filelike
+		sigcmp = file.read(max_sig_size)
+		for name, format in formats.items():
+			if format.start_signature and sigcmp.startswith(format.start_signature):
+				log.debug('guessed: %s' % name)
+				file.seek(0)
+				return format
 
+		assert False
+
+	def __enter__(self, *args, **kwargs):
+		return self
+	
+	def __exit__(self, *args, **kwargs):
+		self.close()
+	
+	def __del__(self):
+		self.close()
 	
 	def close(self):
-		assert self.archive.vtable.Close(self.archive) == S_OK
+		RNOK(self.archive.vtable.Close(self.archive))
 	
 	def __len__(self):
 		num_items = ffi.new('uint32_t*')
-		assert self.archive.vtable.GetNumberOfItems(self.archive, num_items) == S_OK
+		RNOK(self.archive.vtable.GetNumberOfItems(self.archive, num_items))
 		return int(num_items[0])
 	
 	def __iter__(self):
@@ -185,4 +167,17 @@ class Archive:
 			path = get_string_prop(i, py7ziptypes.kpidPath, self.itm_prop_fn)
 			crc = get_hex_prop(i, py7ziptypes.kpidCRC, self.itm_prop_fn)
 			yield isdir, path, crc
-		
+	
+	def extract(self):
+		'''
+IInArchive::Extract:
+indices must be sorted
+numItems = 0xFFFFFFFF means "all files"
+testMode != 0 means "test files without writing to outStream"
+		'''
+		callback = ArchiveExtractCallback()
+		callback_inst = callback.instances[py7ziptypes.IID_IArchiveExtractCallback]
+		indices = ffi.new('uint32_t[]', [])
+		RNOK(self.archive.vtable.Extract(self.archive, ffi.NULL, 0xFFFFFFFF, 0, callback_inst))
+		callback.out_file.filelike.flush()
+		callback.out_file.filelike.close()

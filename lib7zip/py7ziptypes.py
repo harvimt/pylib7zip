@@ -19,18 +19,51 @@ typedef struct{
 
 typedef struct {
 	$CDEF_IUnknown
-	HRESULT(*SetTotal)(const uint64_t *files, const uint64_t *bytes);
-	HRESULT(*SetCompleted)(const uint64_t *files, const uint64_t *bytes);
+	HRESULT (*Write)(void* self, const void *data, uint32_t size, uint32_t *processedSize);
+	/*
+	if (size > 0) this function must write at least 1 byte.
+	This function is allowed to write less than "size".
+	You must call Write function in loop, if you need to write exact amount of data
+	*/
+	HRESULT (*Seek)(void* self, int64_t offset, uint32_t seekOrigin, uint64_t *newPosition);
+} _IOutStream_vtable;
+
+typedef struct {
+	_IOutStream_vtable* vtable;
+} IOutStream;
+
+typedef IOutStream ISequentialOutStream;
+typedef IInStream ISequentialInStream;
+
+
+typedef struct {
+	$CDEF_IUnknown
+	HRESULT(*SetTotal)(void* self, const uint64_t *files, const uint64_t *bytes);
+	HRESULT(*SetCompleted)(void* self, const uint64_t *files, const uint64_t *bytes);
 } _IArchiveOpenCallback_vtable;
 
 typedef struct {
 	_IArchiveOpenCallback_vtable* vtable;
 } IArchiveOpenCallback;
 
-typedef void IArchiveExtractCallback; /* TODO */
+typedef struct {
+	$CDEF_IUnknown
+	HRESULT(*SetTotal)(void* self, uint64_t total);
+	HRESULT(*SetCompleted)(void* self, const uint64_t *completeValue);
+	HRESULT(*GetStream)(void* self, uint32_t index, ISequentialOutStream **outStream,  int32_t askExtractMode);
+	HRESULT(*PrepareOperation)(void* self, int32_t askExtractMode);
+	HRESULT(*SetOperationResult)(void* self, int32_t resultEOperationResult);
+} _IArchiveExtractCallback_vtable;
 
-typedef struct
-{
+typedef struct {_IArchiveExtractCallback_vtable* vtable; } IArchiveExtractCallback;
+
+typedef struct {
+	$CDEF_IUnknown
+	HRESULT(*SetRatioInfo)(void* self, const uint64_t *inSize, const uint64_t *outSize);
+} _ICompressProgressInfo_vtable;
+typedef struct {_ICompressProgressInfo_vtable* vtable;} ICompressProgressInfo;
+
+typedef struct {
 	$CDEF_IUnknown
 	HRESULT (*Open)(void* self, IInStream *stream, const uint64_t *maxCheckStartPosition, IArchiveOpenCallback *openArchiveCallback);
 	HRESULT (*Close)(void* self);
@@ -70,18 +103,20 @@ typedef struct {
 } ISetCompressCodecsInfo;
 
 typedef struct {
+    $CDEF_IUnknown
 	HRESULT (*CryptoGetTextPassword)(void* self, wchar_t **password);
 } _ICryptoGetTextPassword_vtable;
 typedef struct { _ICryptoGetTextPassword_vtable* vtable;} ICryptoGetTextPassword;
  
 typedef struct {
+  $CDEF_IUnknown
   HRESULT (*GetProperty)(void* self, PROPID propID, PROPVARIANT *value);
   HRESULT (*GetStream)(void* self, const wchar_t *name, IInStream **inStream);
 } _IArchiveOpenVolumeCallback_vtable;
-
 typedef struct { _IArchiveOpenVolumeCallback_vtable* vtable; } IArchiveOpenVolumeCallback;
 
 typedef struct {
+	$CDEF_IUnknown
 	HRESULT (*SetSubArchiveName)(void* self, const wchar_t *name);
 } _IArchiveOpenSetSubArchiveName_vtable;
 typedef struct { _IArchiveOpenSetSubArchiveName_vtable* vtable; } IArchiveOpenSetSubArchiveName;
@@ -92,6 +127,12 @@ class FormatProps:
 	kName = 0
 	kClassID = 1
 	kExtension = 2
+	kAddExtension = 3
+	kUpdate = 4
+	kKeepName = 5
+	kStartSignature = 6
+	kFinishSignature = 7
+	kAssociate = 8
 
 class MethodProps:
 	kID = 0

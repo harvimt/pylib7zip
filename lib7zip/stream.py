@@ -1,68 +1,31 @@
 from .comtypes import IID_IUnknown
-from .py7ziptypes import IID_IInStream
+from .py7ziptypes import IID_IInStream, IID_ISequentialOutStream
 
 from .wintypes import guidp2uuid, S_OK
 from . import log, ffi, wintypes
 
-GUIDS = {
-	IID_IInStream: 'IInStream',
-}
+from .simplecom import IUnknownImpl
 
-class FileInStream():
-	def __init__(self, filename):
-		self.filelike = open(filename, 'rb')
-		self.ref = 1
-
-		self.vtables = []
-		self.instances = {}
-		self.methods = {}
+class FileInStream(IUnknownImpl):
+	"""
+		Implementation of IInStream and ISequentialInStream on top of python file-like objects
 		
-		for iid, interface in GUIDS.items():
-			vtable = ffi.new('_' + interface + '_vtable*')
-			instance = ffi.new(interface + '*')
-			instance.vtable = vtable
-			
-			for name, method_type in ffi.typeof(vtable).item.fields:
-				try:
-					method = self.methods[name]
-				except KeyError:
-					ctype = ffi.typeof(getattr(vtable, name))
-					self.methods[name] = method = ffi.callback(ctype, getattr(self, name))
-				
-				setattr(vtable, name, method)
-			self.vtables.append(vtable)
-			self.instances[iid] = instance
-
-	def QueryInterface(self, me, iid, out_ref):
-		uu = guidp2uuid(iid)
-		log.debug('Callback Interface Queried %r, %r' % (self, uu) )
-
-		if uu == IID_IUnknown:
-			out_ref[0] = me
-			return S_OK
-		elif uu in self.instances:
-			log.debug('found guid')
-			out_ref[0] = self.instances[uu]
-			return S_OK
+		Creator responsible for closing the file-like objects.
+	"""
+	GUIDS = {
+		IID_IInStream: 'IInStream',
+		IID_ISequentialInStream: 'ISequentialInStream',
+	}
+	
+	def __init__(self, file):
+		if isinstance(file, str):
+			self.filelike = open(filename, 'rb')
 		else:
-			#log.debug(uu)
-			log.warn('Unknown GUID {!r}'.format(uu))
-			
-			out_ref[0] = ffi.NULL
-			return wintypes.E_NOINTERFACE
-	
-	def AddRef(self, me):
-		log.debug('stream AddRef')
-		self.ref += 1
-		return self.ref
-	
-	def Release(self, me):
-		log.debug('stream Release')
-		self.ref -= 1
-		return self.ref
+			self.filelike = file
+		super().__init__()
 	
 	def Read(self, me, data, size, processed_size):
-		log.debug('Read size={}'.format(size))
+		#log.debug('Read size={}'.format(size))
 		buf = self.filelike.read(size)
 		psize = len(buf)
 
@@ -70,14 +33,49 @@ class FileInStream():
 			processed_size[0] = psize
 		
 		data[0:psize] = buf[0:psize]
-		log.debug('processed size: {}'.format(psize))
+		#log.debug('processed size: {}'.format(psize))
 
 		return S_OK
 	
 	def Seek(self, me, offset, origin, newposition):
-		log.debug('Seek offset={}; origin={}'.format(offset, origin))
+		#log.debug('Seek offset={}; origin={}'.format(offset, origin))
 		newpos = self.filelike.seek(offset, origin)
 		if newposition != ffi.NULL:
 			newposition[0] = newpos
-		log.debug('new position: {}'.format(newpos))
+		#log.debug('new position: {}'.format(newpos))
+		return S_OK
+
+
+class FileOutStream(IUnknownImpl):
+	"""
+		Implementation of IOutStream and ISequentialOutStream on top of Python file-like objects. 
+		
+		Creator is responsible for flushing/closing the file-like object
+	"""
+	GUIDS = {
+		IID_IOutStream: 'IOutStream',
+		IID_ISequentialOutStream: 'ISequentialOutStream',
+	}
+	
+	def __init__(self, file):
+		if isinstance(file, str):
+			self.filelike = open(filename, 'wb')
+		else:
+			self.filelike = file
+		super().__init__()
+	
+	def Write(self, me, data, size, processed_size):
+		log.debug('Write %d' % size)
+		data_arr = ffi.cast('uint8_t*', data)
+		buf = bytes(data_arr[0:size])
+		#log.debug('data: %s' % buf.decode('ascii'))
+		processed_size[0] = self.filelike.write(buf)
+		return S_OK
+
+	def Seek(self, me, offset, origin, newposition):
+		#log.debug('Seek offset={}; origin={}'.format(offset, origin))
+		newpos = self.filelike.seek(offset, origin)
+		if newposition != ffi.NULL:
+			newposition[0] = newpos
+		#log.debug('new position: {}'.format(newpos))
 		return S_OK
