@@ -1,242 +1,188 @@
-import time, sys
-import uuid
 from collections import namedtuple
+from functools import partial
+
+import uuid
+
+import logging
+from logging import StreamHandler
+log = logging.getLogger('lib7zip')
+log.setLevel(logging.DEBUG)
+log.addHandler(StreamHandler())
 
 from cffi import FFI
 ffi = FFI()
 
-ffi.cdef("""
-typedef unsigned long long ULONGLONG;
-typedef struct PROPVARIANT {
-  unsigned short    vt;
-  unsigned short    wReserved1;
-  unsigned short    wReserved2;
-  unsigned short    wReserved3;
-  union {
-    char              cVal;
-    unsigned char     bVal;
-    short             iVal;
-    unsigned short    uiVal;
-    long              lVal;
-    unsigned long     ulVal;
-    int               intVal;
-    unsigned int      uintVal;
-    float             fltVal;
-    double            dblVal;
-	char*             pcVal;
-	wchar_t*          bstrVal;
-	ULONGLONG         uhVal;
-  };
-} PROPVARIANT;
+from . import wintypes, py7ziptypes, comtypes
+from .wintypes import S_OK, guidp2uuid
+from .py7ziptypes import FormatProps, MethodProps
 
-""")
+ffi.cdef(wintypes.CDEFS)
+ffi.cdef(comtypes.CDEFS)
+ffi.cdef(py7ziptypes.CDEFS)
 
 ffi.cdef("""
 
-typedef unsigned int UInt32;
-typedef ULONG PROPID;
-
-typedef struct {
-    unsigned long  Data1;
-    unsigned short Data2;
-    unsigned short Data3;
-    unsigned char  Data4[ 8 ];
-} GUID;
-
-typedef struct {
-	unsigned short status;
-	unsigned short code;
-} HRESULT;
-
-typedef struct {
-	HRESULT (*QueryInterface) (void*, GUID*, void**);
-} IUnknown_vtable;
-
-typedef struct {
-	IUnknown_vtable* vtable;
-} IUnknown;
-
-
-HRESULT GetMethodProperty(UInt32 index, PROPID propID, PROPVARIANT * value);
-HRESULT GetNumberOfMethods(UInt32 * numMethods);
-HRESULT GetNumberOfFormats(UInt32 * numFormats);
-/*HRESULT GetHandlerProperty(PROPID propID, PROPVARIANT * value);*/
-HRESULT GetHandlerProperty2(UInt32 index, PROPID propID, PROPVARIANT * value);
+HRESULT GetMethodProperty(uint32_t index, PROPID propID, PROPVARIANT * value);
+HRESULT GetNumberOfMethods(uint32_t * numMethods);
+HRESULT GetNumberOfFormats(uint32_t * numFormats);
+HRESULT GetHandlerProperty(PROPID propID, PROPVARIANT * value); /* Unused */
+HRESULT GetHandlerProperty2(uint32_t index, PROPID propID, PROPVARIANT * value);
 HRESULT CreateObject(const GUID * clsID, const GUID * iid, void ** outObject);
-/*HRESULT SetLargePageMode();*/
+HRESULT SetLargePageMode(); /* Unused */
 
-void* create_c7zInSt_Filename(const char* filename);
-void free_C7ZipInStream(void* stream);
+void* calloc(size_t, size_t);
+void free(void*);
 
-int wprintf(const wchar_t*, ...);
 """)
 
-## Magic Numbers ##
-S_OK = 0
-VT_EMPTY = 0
-VT_NULL = 1
-VT_BSTR = 8
-VT_UI8 = 21
+dll7z = ffi.dlopen('7z.dll')
+C = ffi.dlopen(None)
+ole32 = ffi.dlopen('ole32')
 
-class FormatProps:
-	kName = 0
-	kClassID = 1
-	kExtension = 2
+def alloc(ctype):
+	return ffi.gc(C.calloc(1, ffi.sizeof(ctype)), C.free)
 
-class MethodProps:
-	kID = 0
-	kName = 1
-	kDecoder = 2
-	kEncoder = 3 
-	kInStreams = 4
-	kOutStreams = 5
-	kDescription = 6
-	kDecoderIsAssigned = 7
-	kEncoderIsAssigned = 8
+def dealloc_propvariant(pvar):
+	ole32.PropVariantClear(pvar)
+	C.free(pvar)
 
-dll7z = ffi.dlopen('7z')
-c7z = ffi.dlopen('c7zip')
+def alloc_propvariant():
+	return ffi.gc(C.calloc(1, ffi.sizeof('PROPVARIANT')), dealloc_propvariant)
 
-tmp_pvar = ffi.new("PROPVARIANT*")
+def get_prop(idx, propid, get_fn, prop_name, convert, istype=None):
+	tmp_pvar = alloc_propvariant()
+	as_pvar = ffi.cast('PROPVARIANT*', tmp_pvar)
+	#log.debug('get_prop')
 
-def createIID(yy, xx):
-	return uuid.UUID('{{23170F69-40C1-278A-0000-00{yy:s}00{xx:s}0000}}'.format(xx=xx, yy=yy))
+	assert get_fn(idx, propid, as_pvar) == wintypes.S_OK
 
-IUnknown = uuid.UUID('{00000000-0000-0000-C000-000000000046}')
-ISetProperties = createIID('06', '03')
-IArchiveOpenCallback = createIID('06', '10')
-IArchiveExtractCallback = createIID('06', '20')
-IArchiveOpenVolumeCallback = createIID('06', '30')
-IInArchiveGetStream = createIID('06', '40')
-IArchiveOpenSetSubArchiveName = createIID('06', '50')
-IInArchive = createIID('06', '60')
-IArchiveOpenSeq = createIID('06', '61')
+	if istype is not None:
+		#log.debug('vt: {:d}'.format(as_pvar.vt))
+		assert as_pvar.vt == istype
 
-IArchiveUpdateCallback = createIID('06', '80')
-IArchiveUpdateCallback2  = createIID('06', '82')
-IOutArchive = createIID('06', 'A0')
-
-SCOPE_FORMAT = object()
-SCOPE_METHOD = object()
-
-def get_prop(i, prop, type, scope):
-	if scope is SCOPE_FORMAT:
-		fn = dll7z.GetHandlerProperty2
-		prop = getattr(FormatProps, prop)
-	elif scope is SCOPE_METHOD:
-		fn = dll7z.GetMethodProperty
-		prop = getattr(MethodProps, prop)
-	else:
-		raise TypeError
-
-	assert fn(i, prop, tmp_pvar).status == S_OK
-	assert tmp_pvar != ffi.NULL
-	
-	if tmp_pvar[0].vt in (VT_EMPTY, VT_NULL):
+	if as_pvar.vt in (wintypes.VT_EMPTY, wintypes.VT_NULL):
+		log.debug('NULL or empty')
 		return None
-		
-	if tmp_pvar[0].vt != type:
-		raise TypeError('expected %d got %d' % (type, tmp_pvar[0].vt))
-	
 
-	# arguably bad, since I'm reusing the same tmp_pvar all the time
-	# but it usually gets cast to something else before get_prop is called again
-	return tmp_pvar  
+	return convert(getattr(as_pvar, prop_name))
+	#ole32.PropVariantClear(tmp_pvar)
+	return r
 
-def get_string_prop(i, prop, scope):
-	tmp_pvar = get_prop(i, prop, VT_BSTR, scope)
-	if tmp_pvar is None:
-		return ''
-	return ffi.string(tmp_pvar[0].bstrVal)
-
-def get_classid(i, prop, scope):
-	tmp_pvar = get_prop(i, prop, VT_BSTR, scope)
-	if tmp_pvar is None: return None
-	return uuid.UUID(bytes_le=b''.join(ffi.cast('char[16]', tmp_pvar[0].pcVal)))
-
-_remember = []
-def uu2guid(uu):
-	#guid = ffi.new('GUID*')
-	data = ffi.new('uint8_t[16]', uu.bytes_le)
-	_remember.append(data)
-	return ffi.cast('GUID*', data)
+get_string_prop = partial(get_prop, prop_name='bstrVal', istype=wintypes.VT_BSTR, convert=ffi.string)
+get_classid = partial(get_prop, prop_name='puuid', istype=wintypes.VT_BSTR, convert=guidp2uuid)
+get_hex_prop = partial(get_prop, prop_name='uintVal', istype=wintypes.VT_UI4, convert=lambda x: hex(int(x)))
+get_bool_prop = partial(get_prop, prop_name='bVal', istype=wintypes.VT_BOOL, convert=lambda x: x != 0)
 
 Format = namedtuple('Format', ('classid', 'extensions', 'index'))
-def get_format_info():
-	num_formats = ffi.new("UInt32*")
-	assert dll7z.GetNumberOfFormats(num_formats).status == S_OK
-	assert num_formats != ffi.NULL
-
-	return {
-		get_string_prop(i, 'kName', SCOPE_FORMAT): Format(
-			classid=get_classid(i, 'kClassID', SCOPE_FORMAT),
-			extensions=tuple(get_string_prop(i, 'kExtension', SCOPE_FORMAT).split()),
-			index=i,
-		)
-		for i in range(num_formats[0])
-	}
-
-FORMATS = get_format_info()
-
-Method = namedtuple('Method', ('method_id', 'description', 'encoder', 'decoder',))
-def get_method_info():
-	num_methods = ffi.new("UInt32*")
-	assert dll7z.GetNumberOfMethods(num_methods).status == S_OK
-	assert num_methods != ffi.NULL
+class Library():
+	def __init__(self):
+		self.formats = self._get_format_info()
+		self.methods = self._get_method_info()
 	
-	return {
-		get_string_prop(i, 'kName', SCOPE_METHOD): Method(
-			method_id=get_prop(i, 'kID', VT_UI8, SCOPE_METHOD)[0].uhVal,
-			description=get_string_prop(i, 'kDescription', SCOPE_METHOD),
-			encoder=get_classid(i, 'kEncoder', SCOPE_METHOD),
-			decoder=get_classid(i, 'kDecoder', SCOPE_METHOD),
-		)
-		for i in range(num_methods[0])
-	}
-
-METHODS = get_method_info()
-
-'''
-extern "C" const GUID  IID_IInArchive; struct IInArchive: public IUnknown
-{
-	 virtual __declspec(nothrow) HRESULT __stdcall Open(IInStream *stream, const UInt64 *maxCheckStartPosition, IArchiveOpenCallback *openArchiveCallback) = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall Close() = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall GetNumberOfItems(UInt32 *numItems) = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall GetProperty(UInt32 index, PROPID propID, PROPVARIANT *value) = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall Extract(const UInt32* indices, UInt32 numItems, Int32 testMode, IArchiveExtractCallback *extractCallback) = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall GetArchiveProperty(PROPID propID, PROPVARIANT *value) = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall GetNumberOfProperties(UInt32 *numProperties) = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall GetPropertyInfo(UInt32 index, BSTR *name, PROPID *propID, VARTYPE *varType) = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall GetNumberOfArchiveProperties(UInt32 *numProperties) = 0;
-	 virtual __declspec(nothrow) HRESULT __stdcall GetArchivePropertyInfo(UInt32 index, BSTR *name, PROPID *propID, VARTYPE *varType) = 0;
-};
-'''
-
-ffi.cdef("""
-
-""")
-
-def open_archive(filename):
-	classid = uu2guid(FORMATS['7z'].classid)
-	_archive = ffi.new('void**')
-	archive = ffi.cast('IUnknown**', _archive)
-	stream = c7z.create_c7zInSt_Filename(filename)
+	def destroy(self):
+		pass
 	
-	assert dll7z.CreateObject(classid, uu2guid(IInArchive), _archive).status == S_OK
-	assert archive[0] != ffi.NULL
+	def __enter__(self, *args, **kwargs):
+		pass
 	
-	qresult = ffi.new('void**')
+	def __exit__(self, *args, **kwargs):
+		self.destroy()
 	
-	archive[0].vtable.QueryInterface(archive[0], uu2guid(IUnknown), qresult)
-	assert qresult[0] != ffi.NULL
-
-	return archive, qresult
+	def __del__(self):
+		self.destroy()
 	
-def deinit():
-	del METHODS
-	del FORMATS
-	del _remember
+	def _get_format_info(self):
+		num_formats = ffi.new("uint32_t*")
+		assert dll7z.GetNumberOfFormats(num_formats) == S_OK
+		assert num_formats != ffi.NULL
 
-archive, qresult = open_archive(b'simple.7z')
+		return {
+			get_string_prop(i, FormatProps.kName, dll7z.GetHandlerProperty2): Format(
+				classid=get_classid(i, FormatProps.kClassID, dll7z.GetHandlerProperty2),
+				extensions=tuple(get_string_prop(i, FormatProps.kExtension, dll7z.GetHandlerProperty2).split()),
+				index=i,
+			)
+			for i in range(num_formats[0])
+		}
+	
+	def _get_method_info(self):
+		#TODO
+		pass
 
-#deinit()
+@ffi.callback('HRESULT(void* self, uint32_t *numMethods)')
+def get_number_of_methods(self, numMethods):
+	log.debug('get_number_of_methods')
+	return dll7z.GetNumberOfMethods(numMethods)
+
+@ffi.callback('HRESULT(void* self, uint32_t index, PROPID propID, PROPVARIANT *value)')
+def get_method_property(self, index, propID, value):
+	#log.debug('get_method_property')
+	return dll7z.GetMethodProperty(index, propID, value);
+	
+@ffi.callback('HRESULT(void* self, uint32_t index, const GUID *iid, void **coder)')
+def create_decoder(self, index, iid, coder):
+	log.debug('create decoder')
+	classid = get_prop(
+		index,
+		py7ziptypes.MethodProps.kDecoder,
+		dll7z.GetMethodProperty,
+		istype=VT_BSTR)
+
+	#TODO check if decoder assigned
+	return dll7z.CreateObject(classid.puuid, iid, coder)
+	
+@ffi.callback('HRESULT(void* self, uint32_t index, const GUID *iid, void **coder)')
+def create_encoder(self, index, iid, coder):
+	log.debug('create encoder')
+	classid = get_prop(
+		index,
+		py7ziptypes.MethodProps.kEncoder,
+		dll7z.GetMethodProperty,
+		istype=VT_BSTR)
+
+	#TODO check if encoder assigned
+	return dll7z.CreateObject(classid.puuid, iid, coder)
+
+from .open_callback import ArchiveOpenCallback
+from .stream import FileInStream
+
+class Archive:
+	def __init__(self, lib, filename):
+		format = lib.formats['7z']
+		self.tmp_archive = ffi.new('void**')
+		
+		classid = ffi.new('GUID*', format.classid.bytes_le)
+		iid = ffi.new('GUID*', py7ziptypes.IID_IInArchive.bytes_le)
+		assert dll7z.CreateObject(classid, iid, self.tmp_archive) == S_OK
+		assert self.tmp_archive[0] != ffi.NULL
+		self.archive = archive = ffi.cast('IInArchive*', self.tmp_archive[0])
+		
+		## -- ##
+		self.stream = FileInStream(filename)
+		stream_inst = self.stream.instances[py7ziptypes.IID_IInStream]
+		
+		callback = ArchiveOpenCallback(stream=stream_inst)
+		callback_inst = callback.instances[py7ziptypes.IID_IArchiveOpenCallback]
+		
+		maxCheckStartPosition = ffi.new('uint64_t*', 1 << 22)
+		#input()
+		callback_inst = ffi.NULL
+		assert archive.vtable.Open(archive, stream_inst, maxCheckStartPosition, callback_inst) == S_OK
+		self.itm_prop_fn = partial(archive.vtable.GetProperty, archive)
+
+	
+	def close(self):
+		assert self.archive.vtable.Close(self.archive) == S_OK
+	
+	def __len__(self):
+		num_items = ffi.new('uint32_t*')
+		assert self.archive.vtable.GetNumberOfItems(self.archive, num_items) == S_OK
+		return int(num_items[0])
+	
+	def __iter__(self):
+		for i in range(len(self)):
+			isdir = get_bool_prop(i, py7ziptypes.kpidIsDir, self.itm_prop_fn)
+			path = get_string_prop(i, py7ziptypes.kpidPath, self.itm_prop_fn)
+			crc = get_hex_prop(i, py7ziptypes.kpidCRC, self.itm_prop_fn)
+			yield isdir, path, crc
+		
