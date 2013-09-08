@@ -2,7 +2,8 @@ from .comtypes import IID_IUnknown
 from .py7ziptypes import IID_ICryptoGetTextPassword, IID_IArchiveOpenCallback, IID_IArchiveOpenVolumeCallback, IID_IArchiveOpenSetSubArchiveName
 from .simplecom import IUnknownImpl
 
-from .wintypes import guidp2uuid, S_OK
+from .wintypes import S_OK
+from .winhelpers import guidp2uuid
 from . import log, ffi, wintypes
 
 #import logging

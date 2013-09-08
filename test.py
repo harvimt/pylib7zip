@@ -2,7 +2,6 @@ from functools import partial
 from glob import glob
 
 from lib7zip import *
-from lib7zip.py7ziptypes import kpidCRC, kpidPath
 
 def test_getinfo():
 
@@ -13,14 +12,23 @@ def test_getinfo():
 		print(arc_path)
 
 		with Archive(arc_path) as archive:
-			for isdir, path, crc32 in archive:
+			for item in archive:
+				#print(item.isdir)
+				print(
+					item.isdir,
+					item.path.encode('ascii', errors='backslashescape').decode('ascii'),
+					'0x%08x' % item.crc if item.crc else '#NOCRC#',
+				)
+			
 				pass
 				#print(isdir, path.encode(errors='backslashescape').decode('ascii'), crc32)
-		#break
+		break
 
 def test_extract():
 	with Archive('simple.7z') as archive:
-		archive.extract()
+		stream = io.BytesIO()
+		archive[0].extract(stream)
+		assert stream.getvalue() == 'Hello World'
 		
-#test_getinfo()
-test_extract()
+test_getinfo()
+#test_extract()

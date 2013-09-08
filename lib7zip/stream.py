@@ -1,7 +1,8 @@
 from .comtypes import IID_IUnknown
-from .py7ziptypes import IID_IInStream, IID_ISequentialOutStream
+from .py7ziptypes import IID_IInStream, IID_ISequentialInStream,  IID_IOutStream, IID_ISequentialOutStream
 
-from .wintypes import guidp2uuid, S_OK
+from .wintypes import S_OK
+from .winhelpers import guidp2uuid
 from . import log, ffi, wintypes
 
 from .simplecom import IUnknownImpl
@@ -19,7 +20,7 @@ class FileInStream(IUnknownImpl):
 	
 	def __init__(self, file):
 		if isinstance(file, str):
-			self.filelike = open(filename, 'rb')
+			self.filelike = open(file, 'rb')
 		else:
 			self.filelike = file
 		super().__init__()

@@ -1,43 +1,37 @@
-import uuid
+"""
+"""
 CDEFS = """
 typedef unsigned short VARTYPE;
 
 typedef uint8_t GUID[16];
 
 typedef struct PROPVARIANT {
-  VARTYPE           vt;
-  unsigned short    wReserved1;
-  unsigned short    wReserved2;
-  unsigned short    wReserved3;
-  union {
-    char              cVal;
-    unsigned char     bVal;
-    short             iVal;
-    unsigned short    uiVal;
-    long              lVal;
-    unsigned long     ulVal;
-    int               intVal;
-    unsigned int      uintVal;
-    float             fltVal;
-    double            dblVal;
-	char*             pcVal;
-	wchar_t*          bstrVal;
-	uint64_t          uhVal;
-	GUID*             puuid;
-	/* snip */
-  };
-} PROPVARIANT;
+	VARTYPE           vt;
+	unsigned short    wReserved1;
+	unsigned short    wReserved2;
+	unsigned short    wReserved3;
+	union {
+		char              cVal;
+		uint8_t           bVal;
+		int16_t           iVal;
+		uint16_t          uiVal;
+		int32_t           lVal;
+		uint32_t          ulVal;
+		float             fltVal;
+		double            dblVal;
+		char*             pcVal;
+		wchar_t*          bstrVal;
+		uint64_t          uhVal;
+		GUID*             puuid;
+		/* snip */
+	};
+	} PROPVARIANT;
 
 
 typedef unsigned long long HRESULT;
 
 HRESULT PropVariantClear(PROPVARIANT *pvar);
 """
-
-def guidp2uuid(guid):
-	"""GUID* -> uuid.UUID"""
-	return uuid.UUID(bytes_le=bytes(guid[0]))
-
 
 #HRESULT values
 S_OK = 0x00000000  # Operation successful

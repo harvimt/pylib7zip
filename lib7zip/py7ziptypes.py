@@ -33,8 +33,9 @@ typedef struct {
 } IOutStream;
 
 typedef IOutStream ISequentialOutStream;
+typedef _IOutStream_vtable _ISequentialOutStream_vtable;
 typedef IInStream ISequentialInStream;
-
+typedef _IInStream_vtable _ISequentialInStream_vtable;
 
 typedef struct {
 	$CDEF_IUnknown
@@ -246,69 +247,71 @@ IID_IGetFolderArcProps = createIID('08', '11')
 
 #PropID.h
 
-kpidNoProperty = 0
-kpidMainSubfile = 1
-kpidHandlerItemIndex = 2
-kpidPath = 3
-kpidName = 4
-kpidExtension = 5
-kpidIsDir = 6
-kpidSize = 7
-kpidPackSize = 8
-kpidAttrib = 9
-kpidCTime = 10
-kpidATime = 11
-kpidMTime = 12
-kpidSolid = 13
-kpidCommented = 14
-kpidEncrypted = 15
-kpidSplitBefore = 16
-kpidSplitAfter = 17
-kpidDictionarySize = 18
-kpidCRC = 19
-kpidType = 20
-kpidIsAnti = 21
-kpidMethod = 22
-kpidHostOS = 23
-kpidFileSystem = 24
-kpidUser = 25
-kpidGroup = 26
-kpidBlock = 27
-kpidComment = 27
-kpidPosition = 28
-kpidPrefix = 29
-kpidNumSubDirs = 30
-kpidNumSubFiles = 31
-kpidUnpackVer = 32
-kpidVolume = 33
-kpidIsVolume = 34
-kpidOffset = 35
-kpidLinks = 36
-kpidNumBlocks = 37
-kpidNumVolumes = 38
-kpidTimeType = 39
-kpidBit64 = 40
-kpidBigEndian = 41
-kpidCpu = 42
-kpidPhySize = 43
-kpidHeadersSize = 44
-kpidChecksum = 45
-kpidCharacts = 46
-kpidVa = 47
-kpidId = 48 
-kpidShortName = 49
-kpidCreatorApp = 50
-kpidSectorSize = 51
-kpidPosixAttrib = 52
-kpidLink = 53
-kpidError = 54
+class ArchiveProps:
+	"""Archive and Archive Item Propertys"""
+	noproperty = 0  # kpidNoProperty
+	mainsubfile = 1  # kpidMainSubfile
+	handleritemindex = 2  # kpidHandlerItemIndex
+	path = 3  # kpidPath
+	name = 4  # kpidName
+	extension = 5  # kpidExtension
+	isdir = 6  # kpidIsDir
+	size = 7  # kpidSize
+	packed_size = 8  # kpidPackSize
+	attrib = 9  # kpidAttrib
+	ctime = 10  # kpidCTime
+	atime = 11  # kpidATime
+	mtime = 12  # kpidMTime
+	issolid = 13  # kpidSolid
+	iscommented = 14  # kpidCommented
+	isencrypted = 15  # kpidEncrypted
+	splitbefore = 16  # kpidSplitBefore
+	splitafter = 17  # kpidSplitAfter
+	dictionarysize = 18  # kpidDictionarySize
+	crc = 19  # kpidCRC
+	type = 20  # kpidType
+	isanti = 21  # kpidIsAnti
+	method = 22  # kpidMethod
+	hostos = 23  # kpidHostOS
+	filesystem = 24  # kpidFileSystem
+	user = 25  # kpidUser
+	group = 26  # kpidGroup
+	block = 27  # kpidBlock
+	comment = 27  # kpidComment
+	position = 28  # kpidPosition
+	prefix = 29  # kpidPrefix
+	numsubdirs = 30  # kpidNumSubDirs
+	numsubfiles = 31  # kpidNumSubFiles
+	unpackver = 32  # kpidUnpackVer
+	volume = 33  # kpidVolume
+	isvolume = 34  # kpidIsVolume
+	offset = 35  # kpidOffset
+	links = 36  # kpidLinks
+	numblocks = 37  # kpidNumBlocks
+	numvolumes = 38  # kpidNumVolumes
+	timetype = 39  # kpidTimeType
+	bit64 = 40  # kpidBit64
+	bigendian = 41  # kpidBigEndian
+	cpu = 42  # kpidCpu
+	physize = 43  # kpidPhySize
+	headerssize = 44  # kpidHeadersSize
+	checksum = 45  # kpidChecksum
+	characts = 46  # kpidCharacts
+	va = 47  # kpidVa
+	id = 48   # kpidId
+	shortname = 49  # kpidShortName
+	creatorapp = 50  # kpidCreatorApp
+	sectorsize = 51  # kpidSectorSize
+	posixattrib = 52  # kpidPosixAttrib
+	link = 53  # kpidLink
+	error = 54  # kpidError
 
-kpidTotalSize = 0x1100
-kpidFreeSpace = 0x1100 + 1
-kpidClusterSize = 0x1100 + 2
-kpidVolumeName = 0x1100 + 3
+	totalsize = 0x1100  # kpidTotalSize
+	freespace = 0x1100 + 1  # kpidFreeSpace
+	clustersize = 0x1100 + 2  # kpidClusterSize
+	volumename = 0x1100 + 3  # kpidVolumeName
 
-kpidLocalName = 0x1200
-kpidProvider = 0x1200 + 1
+	localname = 0x1200  # kpidLocalName
+	provider = 0x1200 + 1  # kpidProvider
 
-kpidUserDefined = 0x10000
+	userdefined = 0x10000  # kpidUserDefined

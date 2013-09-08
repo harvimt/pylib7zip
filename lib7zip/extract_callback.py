@@ -2,12 +2,16 @@ from .comtypes import IID_IUnknown
 from .py7ziptypes import IID_ICryptoGetTextPassword, IID_IArchiveOpenCallback, IID_IArchiveOpenVolumeCallback, \
 	IID_IArchiveExtractCallback, IID_ISequentialOutStream, IID_ICompressProgressInfo
 
-from .wintypes import guidp2uuid, S_OK
+from .wintypes import S_OK
+from .winhelpers import guidp2uuid
 from . import log, ffi, wintypes
 from .simplecom import IUnknownImpl
 from .stream import FileOutStream
 
 class ArchiveExtractCallback(IUnknownImpl):
+	"""
+		Base class for extract callbacks
+	"""
 	GUIDS = {
 		IID_IArchiveExtractCallback: 'IArchiveExtractCallback',
 		IID_ICryptoGetTextPassword: 'ICryptoGetTextPassword',
@@ -15,11 +19,10 @@ class ArchiveExtractCallback(IUnknownImpl):
 	}
 	
 	def __init__(self, password=''):
-		self.out_file = FileOutStream('out.txt')
+		#self.out_file = FileOutStream(file)
 		self.password = ffi.new('wchar_t[]', password)
 		super().__init__()
 
-		
 	#HRESULT(*SetTotal)(void* self, uint64_t total);
 	def SetTotal(self, me, total):
 		log.debug('SetTotal %d' % total)
@@ -35,8 +38,9 @@ class ArchiveExtractCallback(IUnknownImpl):
 	
 	#HRESULT(*GetStream)(void* self, uint32_t index, ISequentialOutStream **outStream,  int32_t askExtractMode);
 	def GetStream(self, me, index, outStream, askExtractMode):
+		raise NotImplemented
 		log.debug('GetStream')
-		outStream[0] = self.out_file.instances[IID_ISequentialOutStream]
+		#outStream[0] = self.out_file.instances[IID_ISequentialOutStream]
 		return S_OK
 	
 	#HRESULT(*PrepareOperation)(void* self, int32_t askExtractMode);
@@ -58,3 +62,24 @@ class ArchiveExtractCallback(IUnknownImpl):
 	def SetRatioInfo(self, me, in_size, out_size):
 		log.debug('SetRatioInfo: in_size=%d, out_size=%d' % (int(in_size[0]), int(out_size[0])))
 		return S_OK
+
+class ArchiveExtractToDirectoryCallback(ArchiveExtractCallback):
+	"""
+		each item is extracted to the given directory based on it's path.
+	"""
+	def __init__(self, archive, directory='', password=''):
+		self.archive = archive
+		super().__init__(password)
+	
+	def GetStream(self, me, index, outStream, askExtractMode):
+		raise NotImplemented
+		log.debug('GetStream')
+		#outStream[0] = self.out_file.instances[IID_ISequentialOutStream]
+		return S_OK
+		
+class ArchiveExtractToStream(ArchiveExtractCallback):
+	"""
+		Extract all files to the same stream (most useful for extracting one file)
+	"""
+	def __init__(self, stream, password):
+		super().__init__(password)
