@@ -39,7 +39,7 @@ dll7z = ffi.dlopen('7z.dll')
 C = ffi.dlopen(None)
 ole32 = ffi.dlopen('ole32')
 
-from .winhelpers import get_prop_val, guidp2uuid, uuid2guidp, alloc_propvariant
+from .winhelpers import get_prop_val, guidp2uuid, uuid2guidp, alloc_propvariant, RNOK
 
 def get_prop(idx, propid, get_fn, prop_name, convert, istype=None):
 	tmp_pvar = alloc_propvariant()
@@ -70,7 +70,7 @@ Format = namedtuple('Format', ('classid', 'extensions', 'index', 'start_signatur
 
 def get_format_info():
 	num_formats = ffi.new("uint32_t*")
-	assert dll7z.GetNumberOfFormats(num_formats) == S_OK
+	RNOK(dll7z.GetNumberOfFormats(num_formats))
 	assert num_formats != ffi.NULL
 
 	return {

@@ -1,12 +1,13 @@
 from functools import partial
 
-from . import ffi, dll7z, max_sig_size, formats, log
+from . import ffi, dll7z, max_sig_size, formats, log, C
 from . import py7ziptypes
 
 from .wintypes import S_OK
 from .winhelpers import guidp2uuid, uuid2guidp, get_prop_val, RNOK
 
 from .open_callback import ArchiveOpenCallback
+from .extract_callback import ArchiveExtractToDirectoryCallback, ArchiveExtractToStreamCallback
 from .stream import FileInStream
 
 class Archive:
@@ -86,12 +87,13 @@ class Archive:
 			numItems = 0xFFFFFFFF means "all files"
 			testMode != 0 means "test files without writing to outStream"
 		'''
-		callback = ArchiveExtractCallbackDirectory(self, directory)
+		callback = ArchiveExtractToDirectoryCallback(self, directory)
 		callback_inst = callback.instances[py7ziptypes.IID_IArchiveExtractCallback]
 		#indices = ffi.new('uint32_t[]', [])
 		RNOK(self.archive.vtable.Extract(self.archive, ffi.NULL, 0xFFFFFFFF, 0, callback_inst))
-		callback.out_file.filelike.flush()
-		callback.out_file.filelike.close()
+		callback.flush_and_close_streams()
+		#callback.out_file.filelike.flush()
+		#callback.out_file.filelike.close()
 
 class ArchiveItem():
 	def __init__(self, archive, index):
@@ -99,10 +101,19 @@ class ArchiveItem():
 		self.index = index
 		
 	def extract(self, file):
-		callback = ArchiveExtractCallback(directory)
+		callback = ArchiveExtractToStreamCallback(file, self.index)
 		callback_inst = callback.instances[py7ziptypes.IID_IArchiveExtractCallback]
-		pass
-	
+		indices = ffi.new('const uint32_t indices[]', [self.index])
+		
+		#indices_p = C.calloc(1, ffi.sizeof('uint32_t'))
+		#indices = ffi.cast('uint32_t*', indices_p)
+		#indices[0] = self.index
+		
+		log.debug('got here!')
+		RNOK(self.archive.archive.vtable.Extract(self.archive.archive, ffi.NULL, 0xFFFFFFFF, 0, callback_inst))
+		log.debug('done')
+		#C.free(indices_p)
+
 	def __getattr__(self, attr):
 		propid = getattr(py7ziptypes.ArchiveProps, attr)
 		return get_prop_val(partial(self.archive.itm_prop_fn, self.index, propid))

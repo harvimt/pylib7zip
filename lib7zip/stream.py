@@ -60,7 +60,7 @@ class FileOutStream(IUnknownImpl):
 	
 	def __init__(self, file):
 		if isinstance(file, str):
-			self.filelike = open(filename, 'wb')
+			self.filelike = open(file, 'wb')
 		else:
 			self.filelike = file
 		super().__init__()

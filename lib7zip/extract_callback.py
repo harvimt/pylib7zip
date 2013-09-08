@@ -1,10 +1,12 @@
+import os, os.path
+
 from .comtypes import IID_IUnknown
 from .py7ziptypes import IID_ICryptoGetTextPassword, IID_IArchiveOpenCallback, IID_IArchiveOpenVolumeCallback, \
 	IID_IArchiveExtractCallback, IID_ISequentialOutStream, IID_ICompressProgressInfo
 
 from .wintypes import S_OK
 from .winhelpers import guidp2uuid
-from . import log, ffi, wintypes
+from . import log, ffi, wintypes, py7ziptypes
 from .simplecom import IUnknownImpl
 from .stream import FileOutStream
 
@@ -38,8 +40,8 @@ class ArchiveExtractCallback(IUnknownImpl):
 	
 	#HRESULT(*GetStream)(void* self, uint32_t index, ISequentialOutStream **outStream,  int32_t askExtractMode);
 	def GetStream(self, me, index, outStream, askExtractMode):
-		raise NotImplemented
 		log.debug('GetStream')
+		raise NotImplemented
 		#outStream[0] = self.out_file.instances[IID_ISequentialOutStream]
 		return S_OK
 	
@@ -68,18 +70,43 @@ class ArchiveExtractToDirectoryCallback(ArchiveExtractCallback):
 		each item is extracted to the given directory based on it's path.
 	"""
 	def __init__(self, archive, directory='', password=''):
+		self.directory = directory
 		self.archive = archive
+		self._streams = []
 		super().__init__(password)
 	
 	def GetStream(self, me, index, outStream, askExtractMode):
-		raise NotImplemented
 		log.debug('GetStream')
-		#outStream[0] = self.out_file.instances[IID_ISequentialOutStream]
-		return S_OK
+		path = os.path.join(self.directory,self.archive[index].path)
+		dirname = os.path.dirname(path)
+		if dirname and not os.path.exists(dirname):
+			os.makedirs(dirname)
 		
-class ArchiveExtractToStream(ArchiveExtractCallback):
+		stream = FileOutStream(path)
+		outStream[0] = stream.instances[IID_ISequentialOutStream]
+		return S_OK
+	
+	def flush_and_close_streams(self):
+		for stream in self._streams:
+			stream.filelike.flush()
+			stream.filelike.close()
+		
+class ArchiveExtractToStreamCallback(ArchiveExtractCallback):
 	"""
 		Extract all files to the same stream (most useful for extracting one file)
 	"""
-	def __init__(self, stream, password):
+	def __init__(self, stream, index, password=''):
+		self.index = index
+		self.stream = FileOutStream(stream)
 		super().__init__(password)
+		
+	def GetStream(self, me, index, outStream, askExtractMode):
+		log.debug('GetStream')
+		if self.index == index:
+			log.debug('index found')
+			outStream[0] = self.stream.instances[py7ziptypes.IID_ISequentialOutStream]
+			return S_OK
+		else:
+			log.debug('index not found')
+			outStream[0] = ffi.NULL
+			return 1
