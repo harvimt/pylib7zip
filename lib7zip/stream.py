@@ -1,4 +1,3 @@
-from .comtypes import IID_IUnknown
 from .py7ziptypes import IID_IInStream, IID_ISequentialInStream,  IID_IOutStream, IID_ISequentialOutStream
 
 from .wintypes import S_OK

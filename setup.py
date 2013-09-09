@@ -2,7 +2,7 @@ from distutils.core import setup
 import lib7zip
 
 import re
-author = re.match(r'(?P<name>[^<]* <(?P<email>.*)>', lib7zip.__author__)
+author = re.match(r'(?P<name>[^<]*) <(?P<email>.*)>', lib7zip.__author__)
 
 setup(
 	name='Lib7Zip',
@@ -11,7 +11,7 @@ setup(
 	author_email=author.group('email'),
 	license=lib7zip.__license__,
 	description=lib7zip.__doc__,
-	long_description=open('README.txt').read(),
+	long_description=open('README').read(),
 	#build settings
-	py_modules=['lib7zip', ],
+	packages=['lib7zip', ],
 )

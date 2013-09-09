@@ -1,7 +1,15 @@
+"""
+Python bindings to the 7-Zip Library
+"""
+
+__author__ = 'Mark Harviston <mark.harviston@gmail.com>'
+__license__ = 'BSD'
+__version__ = '0.1'
+
 from collections import namedtuple
 from functools import partial
 
-import uuid
+#import uuid
 
 import logging
 from logging import StreamHandler
@@ -13,8 +21,7 @@ from cffi import FFI
 ffi = FFI()
 
 from . import wintypes, py7ziptypes, comtypes
-from .wintypes import S_OK
-from .py7ziptypes import FormatProps, MethodProps
+from .py7ziptypes import FormatProps
 
 ffi.cdef(wintypes.CDEFS)
 ffi.cdef(comtypes.CDEFS)
@@ -39,7 +46,7 @@ dll7z = ffi.dlopen('7z.dll')
 C = ffi.dlopen(None)
 ole32 = ffi.dlopen('ole32')
 
-from .winhelpers import get_prop_val, guidp2uuid, uuid2guidp, alloc_propvariant, RNOK
+from .winhelpers import get_prop_val, guidp2uuid, alloc_propvariant, RNOK
 
 def get_prop(idx, propid, get_fn, prop_name, convert, istype=None):
 	tmp_pvar = alloc_propvariant()
@@ -57,8 +64,6 @@ def get_prop(idx, propid, get_fn, prop_name, convert, istype=None):
 		assert as_pvar.vt == istype
 
 	return convert(getattr(as_pvar, prop_name))
-	#ole32.PropVariantClear(tmp_pvar)
-	return r
 
 get_bytes_prop = partial(get_prop, prop_name='pcVal', istype=wintypes.VT_BSTR, convert=ffi.string)
 get_string_prop = partial(get_prop, prop_name='bstrVal', istype=wintypes.VT_BSTR, convert=ffi.string)
@@ -88,8 +93,4 @@ formats = get_format_info()
 max_sig_size = max(len(f.start_signature) for f in formats.values())
 #methods = get_method_info()
 
-from .extract_callback import ArchiveExtractCallback
-from .open_callback import ArchiveOpenCallback
-from .stream import FileInStream, FileOutStream
-from .archive import Archive
-
+from .archive import Archive  # noqa

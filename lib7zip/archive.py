@@ -1,10 +1,9 @@
 from functools import partial
 
-from . import ffi, dll7z, max_sig_size, formats, log, C
+from . import ffi, dll7z, max_sig_size, formats, log
 from . import py7ziptypes
 
-from .wintypes import S_OK
-from .winhelpers import guidp2uuid, uuid2guidp, get_prop_val, RNOK
+from .winhelpers import uuid2guidp, get_prop_val, RNOK
 
 from .open_callback import ArchiveOpenCallback
 from .extract_callback import ArchiveExtractToDirectoryCallback, ArchiveExtractToStreamCallback
@@ -103,7 +102,7 @@ class ArchiveItem():
 	def extract(self, file):
 		callback = ArchiveExtractToStreamCallback(file, self.index)
 		callback_inst = callback.instances[py7ziptypes.IID_IArchiveExtractCallback]
-		indices = ffi.new('const uint32_t indices[]', [self.index])
+		#indices = ffi.new('const uint32_t indices[]', [self.index])
 		
 		#indices_p = C.calloc(1, ffi.sizeof('uint32_t'))
 		#indices = ffi.cast('uint32_t*', indices_p)

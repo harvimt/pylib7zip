@@ -1,12 +1,9 @@
 import os, os.path
 
-from .comtypes import IID_IUnknown
-from .py7ziptypes import IID_ICryptoGetTextPassword, IID_IArchiveOpenCallback, IID_IArchiveOpenVolumeCallback, \
-	IID_IArchiveExtractCallback, IID_ISequentialOutStream, IID_ICompressProgressInfo
+from .py7ziptypes import IID_ICryptoGetTextPassword, IID_IArchiveExtractCallback, IID_ISequentialOutStream, IID_ICompressProgressInfo
 
 from .wintypes import S_OK
-from .winhelpers import guidp2uuid
-from . import log, ffi, wintypes, py7ziptypes
+from . import log, ffi, py7ziptypes
 from .simplecom import IUnknownImpl
 from .stream import FileOutStream
 
