@@ -13,7 +13,6 @@ import logging
 from logging import StreamHandler
 log = logging.getLogger('lib7zip')
 log.addHandler(StreamHandler())
-log.setLevel(logging.DEBUG)
 
 from cffi import FFI
 ffi = FFI()

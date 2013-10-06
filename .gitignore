@@ -10,7 +10,5 @@ Makefile
 *.exe
 __pycache__
 *.pyc
-/Lib7Zip.egg-info/PKG-INFO
-/Lib7Zip.egg-info/SOURCES.txt
-/Lib7Zip.egg-info/dependency_links.txt
-/Lib7Zip.egg-info/top_level.txt
+/*.egg-info/*
+.coverage
