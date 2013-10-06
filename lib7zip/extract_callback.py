@@ -74,16 +74,18 @@ class ArchiveExtractToDirectoryCallback(ArchiveExtractCallback):
 	
 	def GetStream(self, me, index, outStream, askExtractMode):
 		log.debug('GetStream')
-		path = os.path.join(self.directory,self.archive[index].path)
+		path = os.path.join(self.directory, self.archive[index].path)
 		dirname = os.path.dirname(path)
 		if dirname and not os.path.exists(dirname):
 			os.makedirs(dirname)
 		
 		stream = FileOutStream(path)
+		self._streams.append(stream)
 		outStream[0] = stream.instances[IID_ISequentialOutStream]
 		return HRESULT.S_OK.value
 	
 	def flush_and_close_streams(self):
+		log.debug('flushing streams')
 		for stream in self._streams:
 			stream.filelike.flush()
 			stream.filelike.close()
