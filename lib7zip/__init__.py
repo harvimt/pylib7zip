@@ -8,6 +8,7 @@ __version__ = '0.1'
 
 from collections import namedtuple
 from functools import partial
+import os.path
 
 import logging
 from logging import StreamHandler
@@ -39,7 +40,20 @@ void free(void*);
 
 """)
 
-dll7z = ffi.dlopen('7z.dll')
+dll_path = os.environ.get('7ZDLL_PATH')
+if dll_path:
+	log.info('DLL path set in environment')
+else:
+	log.info('autodetecting dll path from registry')
+	from winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE, KEY_READ
+
+	aKey = OpenKey(HKEY_LOCAL_MACHINE, r"SOFTWARE\7-Zip", 0 , KEY_READ)
+	s7z_path = QueryValueEx(aKey, "Path")[0]
+	dll_path = os.path.join(s7z_path, '7z.dll')
+
+log.info('dll_path: %s', dll_path)
+dll7z = ffi.dlopen(dll_path)
+
 C = ffi.dlopen(None)
 ole32 = ffi.dlopen('ole32')
 

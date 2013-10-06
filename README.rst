@@ -17,13 +17,14 @@ but with a clean Pythonic API.
 
 Like lib7zip getting metadata and extracting files are the only operations supported, creating archives, or updating them in-place is not supported.
 
-This is beta software and may crash if used in an unusal way.
+This is beta software and may crash if used in an unusual way.
 
 Dependencies
 ------------
 
     * 7z.so/7z.dll from http://7zip.org or p7zip on \*Nix
     * CFFI_
+    * enum34_
 
 How To Use
 ----------
@@ -66,3 +67,4 @@ This code is licensed under the BSD 2-clause license.
 7-Zip is licensed under the LGPL with the exception of the code handling rar compression.
 
 .. _CFFI: https://cffi.readthedocs.org/en/release-0.6/
+.. _enum34: https://pypi.python.org/pypi/enum34
