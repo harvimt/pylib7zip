@@ -9,12 +9,9 @@ __version__ = '0.1'
 from collections import namedtuple
 from functools import partial
 
-#import uuid
-
 import logging
 from logging import StreamHandler
 log = logging.getLogger('lib7zip')
-log.setLevel(logging.DEBUG)
 log.addHandler(StreamHandler())
 
 from cffi import FFI
@@ -53,7 +50,7 @@ def get_prop(idx, propid, get_fn, prop_name, convert, istype=None):
 	as_pvar = ffi.cast('PROPVARIANT*', tmp_pvar)
 	#log.debug('get_prop')
 
-	assert get_fn(idx, propid, as_pvar) == wintypes.S_OK
+	RNOK(get_fn(idx, propid, as_pvar))
 
 	if as_pvar.vt in (wintypes.VT_EMPTY, wintypes.VT_NULL):
 		#log.debug('NULL or empty')

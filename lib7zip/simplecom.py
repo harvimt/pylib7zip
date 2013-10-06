@@ -5,7 +5,7 @@ Simple COM, using DRY principles, but w/o too much meta
 from . import ffi, guidp2uuid, log
 from . import wintypes
 from .comtypes import IID_IUnknown
-from .wintypes import S_OK
+from .wintypes import HRESULT
 
 """
 import functools
@@ -51,12 +51,12 @@ class IUnknownImpl:
 		self.ref += 1
 		if uu == IID_IUnknown:
 			out_ref[0] = me
-			return S_OK
+			return HRESULT.S_OK.value
 		elif uu in self.instances:
 			log.debug('found guid: %s' % self.GUIDS[uu])
 			out_ref[0] = self.instances[uu]
 			#out_ref[0] = me
-			return S_OK
+			return HRESULT.S_OK.value
 		else:
 			log.warn('Unknown GUID {!r} on {}'.format(uu, type(self).__name__))
 			

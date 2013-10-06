@@ -29,6 +29,7 @@ How To Use
 ----------
 By default the path to 7z.dll/7z.so will be autodetected.
 
+.. code:: python
 	import io
 	from lib7zip import Archive, formats
 	#view information on supported formats

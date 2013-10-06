@@ -1,4 +1,5 @@
-from distutils.core import setup
+import sys
+from setuptools import setup
 import lib7zip
 
 import re
@@ -13,5 +14,6 @@ setup(
 	description=lib7zip.__doc__,
 	long_description=open('README').read(),
 	#build settings
+	install_requires=['enum34'] if sys.version_info < (3,4) else [],
 	packages=['lib7zip', ],
 )

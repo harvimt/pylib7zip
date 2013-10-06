@@ -1,7 +1,7 @@
 
 from .py7ziptypes import IID_IInStream, IID_ISequentialInStream,  IID_IOutStream, IID_ISequentialOutStream
 
-from .wintypes import S_OK
+from .wintypes import HRESULT
 from .winhelpers import guidp2uuid
 from . import log, ffi, wintypes
 
@@ -36,7 +36,7 @@ class FileInStream(IUnknownImpl):
 		data[0:psize] = buf[0:psize]
 		#log.debug('processed size: {}'.format(psize))
 
-		return S_OK
+		return HRESULT.S_OK.value
 	
 	def Seek(self, me, offset, origin, newposition):
 		#log.debug('Seek offset={}; origin={}'.format(offset, origin))
@@ -44,7 +44,7 @@ class FileInStream(IUnknownImpl):
 		if newposition != ffi.NULL:
 			newposition[0] = newpos
 		#log.debug('new position: {}'.format(newpos))
-		return S_OK
+		return HRESULT.S_OK.value
 
 
 class FileOutStream(IUnknownImpl):
@@ -71,7 +71,7 @@ class FileOutStream(IUnknownImpl):
 		buf = bytes(data_arr[0:size])
 		#log.debug('data: %s' % buf.decode('ascii'))
 		processed_size[0] = self.filelike.write(buf)
-		return S_OK
+		return HRESULT.S_OK.value
 
 	def Seek(self, me, offset, origin, newposition):
 		#log.debug('Seek offset={}; origin={}'.format(offset, origin))
@@ -79,4 +79,4 @@ class FileOutStream(IUnknownImpl):
 		if newposition != ffi.NULL:
 			newposition[0] = newpos
 		#log.debug('new position: {}'.format(newpos))
-		return S_OK
+		return HRESULT.S_OK.value

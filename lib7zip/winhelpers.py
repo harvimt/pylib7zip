@@ -14,10 +14,17 @@ def uuid2guidp(uu):
 	"""uuid.UUID -> GUID*"""
 	return ffi.new('GUID*', uu.bytes_le)
 
+class HRESULTException(Exception): pass
+
 def RNOK(status):
 	""" raise error if not S_OK """
 	# TODO raise different Exception based on result
-	assert int(status) == S_OK
+	if status != HRESULT.S_OK:
+		try:
+			hresult = HRESULT(status)
+			raise HRESULTException(hresult.name + ': ' + hresult.desc)
+		except ValueError:
+			raise HRESULTException('%08x' % status)
 
 def dealloc_propvariant(pvar):
 	ole32.PropVariantClear(pvar)
