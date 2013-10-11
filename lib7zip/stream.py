@@ -1,11 +1,12 @@
-
+import logging
 from .py7ziptypes import IID_IInStream, IID_ISequentialInStream,  IID_IOutStream, IID_ISequentialOutStream
 
 from .wintypes import HRESULT
 from .winhelpers import guidp2uuid
-from . import log, ffi, wintypes
+from . import ffi, wintypes
 
 from .simplecom import IUnknownImpl
+log = logging.getLogger(__name__)
 
 class FileInStream(IUnknownImpl):
 	"""
@@ -26,7 +27,7 @@ class FileInStream(IUnknownImpl):
 		super().__init__()
 	
 	def Read(self, me, data, size, processed_size):
-		#log.debug('Read size={}'.format(size))
+		log.debug('Read size=%d', size)
 		buf = self.filelike.read(size)
 		psize = len(buf)
 
@@ -34,16 +35,16 @@ class FileInStream(IUnknownImpl):
 			processed_size[0] = psize
 		
 		data[0:psize] = buf[0:psize]
-		#log.debug('processed size: {}'.format(psize))
+		log.debug('processed size: {}'.format(psize))
 
 		return HRESULT.S_OK.value
 	
 	def Seek(self, me, offset, origin, newposition):
-		#log.debug('Seek offset={}; origin={}'.format(offset, origin))
+		log.debug('Seek offset=%d; origin=%d', offset, origin)
 		newpos = self.filelike.seek(offset, origin)
 		if newposition != ffi.NULL:
 			newposition[0] = newpos
-		#log.debug('new position: {}'.format(newpos))
+		log.debug('new position: %d', newpos)
 		return HRESULT.S_OK.value
 
 
@@ -66,17 +67,19 @@ class FileOutStream(IUnknownImpl):
 		super().__init__()
 	
 	def Write(self, me, data, size, processed_size):
-		log.debug('Write %d' % size)
+		log.debug('Write %d', size)
 		data_arr = ffi.cast('uint8_t*', data)
 		buf = bytes(data_arr[0:size])
 		#log.debug('data: %s' % buf.decode('ascii'))
-		processed_size[0] = self.filelike.write(buf)
+		_processed_size = self.filelike.write(buf)
+		processed_size[0] = _processed_size
+		log.debug('processed_size: %d', _processed_size)
 		return HRESULT.S_OK.value
 
 	def Seek(self, me, offset, origin, newposition):
-		#log.debug('Seek offset={}; origin={}'.format(offset, origin))
+		log.debug('Seek offset=%d; origin=%d', offset, origin)
 		newpos = self.filelike.seek(offset, origin)
 		if newposition != ffi.NULL:
 			newposition[0] = newpos
-		#log.debug('new position: {}'.format(newpos))
+		log.debug('new position: %d', newpos)
 		return HRESULT.S_OK.value

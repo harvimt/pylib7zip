@@ -1,6 +1,7 @@
 import uuid
 from .comtypes import CDEF_IUnknown
 from string import Template
+from enum import Enum, IntEnum
 
 CDEFS = Template('''
 typedef uint32_t PROPID; /*actually an enum, often a different enum for each function...*/
@@ -89,30 +90,34 @@ typedef struct {
 	HRESULT(*CreateDecoder)(void* self, uint32_t index, const GUID *iid, void **coder);
 	HRESULT(*CreateEncoder)(void* self, uint32_t index, const GUID *iid, void **coder);
  } _ICompressCodecsInfo_vtable;
- 
- typedef struct {
- 	_ICompressCodecsInfo_vtable* vtable;
- } ICompressCodecsInfo;
-  
+
+typedef struct {
+	_ICompressCodecsInfo_vtable* vtable;
+} ICompressCodecsInfo;
+
 typedef struct {
 	$CDEF_IUnknown
 	HRESULT (*SetCompressCodecsInfo)(void* self, ICompressCodecsInfo *compressCodecsInfo);
-}_ISetCompressCodecsInfo_vtable;
+} _ISetCompressCodecsInfo_vtable;
+
+typedef struct {_ISetCompressCodecsInfo_vtable* vtable;} ISetCompressCodecsInfo;
 
 typedef struct {
-	_ISetCompressCodecsInfo_vtable* vtable;
-} ISetCompressCodecsInfo;
-
-typedef struct {
-    $CDEF_IUnknown
+	$CDEF_IUnknown
 	HRESULT (*CryptoGetTextPassword)(void* self, wchar_t **password);
 } _ICryptoGetTextPassword_vtable;
 typedef struct { _ICryptoGetTextPassword_vtable* vtable;} ICryptoGetTextPassword;
  
 typedef struct {
-  $CDEF_IUnknown
-  HRESULT (*GetProperty)(void* self, PROPID propID, PROPVARIANT *value);
-  HRESULT (*GetStream)(void* self, const wchar_t *name, IInStream **inStream);
+	$CDEF_IUnknown
+	HRESULT (*CryptoGetTextPassword2)(void* self, int* isdefined, wchar_t **password);
+} _ICryptoGetTextPassword2_vtable;
+typedef struct { _ICryptoGetTextPassword2_vtable* vtable;} ICryptoGetTextPassword2;
+ 
+typedef struct {
+	$CDEF_IUnknown
+	HRESULT (*GetProperty)(void* self, PROPID propID, PROPVARIANT *value);
+	HRESULT (*GetStream)(void* self, const wchar_t *name, IInStream **inStream);
 } _IArchiveOpenVolumeCallback_vtable;
 typedef struct { _IArchiveOpenVolumeCallback_vtable* vtable; } IArchiveOpenVolumeCallback;
 
@@ -124,7 +129,7 @@ typedef struct { _IArchiveOpenSetSubArchiveName_vtable* vtable; } IArchiveOpenSe
 '''
 ).substitute(CDEF_IUnknown=CDEF_IUnknown)
 
-class FormatProps:
+class FormatProps(IntEnum):
 	kName = 0
 	kClassID = 1
 	kExtension = 2
@@ -135,11 +140,11 @@ class FormatProps:
 	kFinishSignature = 7
 	kAssociate = 8
 
-class MethodProps:
+class MethodProps(IntEnum):
 	kID = 0
 	kName = 1
 	kDecoder = 2
-	kEncoder = 3 
+	kEncoder = 3
 	kInStreams = 4
 	kOutStreams = 5
 	kDescription = 6
@@ -315,3 +320,9 @@ class ArchiveProps:
 	provider = 0x1200 + 1  # kpidProvider
 
 	userdefined = 0x10000  # kpidUserDefined
+
+class OperationResult(Enum):
+	kOK = 0
+	kUnSupportedMethod = 1
+	kDataError = 2
+	kCRCError = 3

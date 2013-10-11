@@ -2,10 +2,12 @@
 """
 Simple COM, using DRY principles, but w/o too much meta
 """
-from . import ffi, guidp2uuid, log
+import logging
+from . import ffi, guidp2uuid
 from . import wintypes
 from .comtypes import IID_IUnknown
 from .wintypes import HRESULT
+log = logging.getLogger(__name__)
 
 """
 import functools
@@ -50,6 +52,7 @@ class IUnknownImpl:
 		#log.debug('Callback Interface Queried %r' % (uu) )
 		self.ref += 1
 		if uu == IID_IUnknown:
+			log.debug('IIUnknown Queried')
 			out_ref[0] = me
 			return HRESULT.S_OK.value
 		elif uu in self.instances:
@@ -61,16 +64,19 @@ class IUnknownImpl:
 			log.warn('Unknown GUID {!r} on {}'.format(uu, type(self).__name__))
 			
 			out_ref[0] = ffi.NULL
-			return wintypes.E_NOINTERFACE
+			return HRESULT.E_NOINTERFACE.value
 		
 	def AddRef(self, me):
-		#log.debug('callback AddRef')
+		log.debug('callback AddRef')
 		self.ref += 1
-		#log.debug('refcount: {}'.format(self.ref))
+		log.debug('refcount: {}'.format(self.ref))
 		return self.ref
 	
 	def Release(self, me):
-		#log.debug('callback Release')
+		log.debug('callback Release')
 		self.ref -= 1
-		#log.debug('refcount: {}'.format(self.ref))
+		log.debug('refcount: {}'.format(self.ref))
 		return self.ref
+	
+	def __del__(self):
+		log.debug('__del__')

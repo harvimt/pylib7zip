@@ -3,8 +3,10 @@ Helper functions for dealing with windows types defined in wintypes like PROPVAR
 """
 
 import uuid
-from . import ffi, C, ole32, log
+from . import ffi, C, free_propvariant, log
 from .wintypes import *
+from bitstring import BitArray
+import warnings
 
 def guidp2uuid(guid):
 	"""GUID* -> uuid.UUID"""
@@ -16,22 +18,63 @@ def uuid2guidp(uu):
 
 class HRESULTException(Exception): pass
 
-def RNOK(status):
+def RNOK(code):
 	""" raise error if not S_OK """
 	# TODO raise different Exception based on result
-	if status != HRESULT.S_OK:
+	if code == HRESULT.S_OK.value: return
+	#parse HRESULT
+	
+	'''
+	barr = BitArray(uint=code, length=32)
+
+	# first 2 bits are status
+	SUCCESS = '0b00'
+	INFO = '0b01'
+	WARN = '0b10'
+	ERROR = '0b11'
+	status = barr[0:2]
+
+	#next says whether this is user-defined or not
+	is_cust = barr[2]
+	# reserved bit (should always be 0?)
+	reserved = barr[3]
+	log.debug('is_cust=%r; reserved=%r', is_cust, reserved)
+	# what errored e.g. the "facility"
+	facility = barr[4:12].uint
+	# finally, the code
+	h_code = barr[16:].uint
+
+	if code == HRESULT.S_FALSE:
+		raise HRESULTException('S_FALSE')
+	elif status == SUCCESS:
+		log.info('SUCCESS, but not S_OK, %d/%04x', facility, h_code)
+	elif status == INFO:
+		log.info('INFO %d/%04x', facility, h_code)
+	elif status == WARN:
+		log.warn('WARNING, %d/%04x' % (facility, h_code))
+	elif status == ERROR:
 		try:
-			hresult = HRESULT(status)
+			hresult = HRESULT(code)
 			raise HRESULTException(hresult.name + ': ' + hresult.desc)
 		except ValueError:
-			raise HRESULTException('%08x' % status)
+			#raise HRESULTException('HRESULT, %08x', code)
+			raise HRESULTException('HRESULT, %d/04x', facility, h_code)
+	'''
+
+	try:
+		hresult = HRESULT(code)
+		raise HRESULTException(hresult.name + ': ' + hresult.desc)
+	except ValueError:
+		raise HRESULTException('HRESULT, %08x', code)
+		#raise HRESULTException('HRESULT, %d/04x', facility, h_code)
 
 def dealloc_propvariant(pvar):
-	ole32.PropVariantClear(pvar)
+	free_propvariant(pvar)
 	C.free(pvar)
 
 def alloc_propvariant():
-	return ffi.gc(C.calloc(1, ffi.sizeof('PROPVARIANT')), dealloc_propvariant)
+	#return ffi.gc(C.calloc(1, ffi.sizeof('PROPVARIANT')), dealloc_propvariant)
+	return ffi.new('PROPVARIANT*')
 	
 def get_prop_val(fn, forcetype=None, checktype=None):
 	"""
