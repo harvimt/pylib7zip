@@ -5,11 +5,13 @@ Helper functions for dealing with windows types defined in wintypes like PROPVAR
 import uuid
 from . import ffi, C, free_propvariant, log
 from .wintypes import *
-from bitstring import BitArray
-import warnings
+#from bitstring import BitArray
+#import warnings
 
 def guidp2uuid(guid):
 	"""GUID* -> uuid.UUID"""
+	#if guid == ffi.NULL:
+	#	return None
 	return uuid.UUID(bytes_le=bytes(guid[0]))
 
 def uuid2guidp(uu):
@@ -57,7 +59,6 @@ def RNOK(code):
 			hresult = HRESULT(code)
 			raise HRESULTException(hresult.name + ': ' + hresult.desc)
 		except ValueError:
-			#raise HRESULTException('HRESULT, %08x', code)
 			raise HRESULTException('HRESULT, %d/04x', facility, h_code)
 	'''
 
@@ -66,15 +67,23 @@ def RNOK(code):
 		raise HRESULTException(hresult.name + ': ' + hresult.desc)
 	except ValueError:
 		raise HRESULTException('HRESULT, %08x', code)
-		#raise HRESULTException('HRESULT, %d/04x', facility, h_code)
 
 def dealloc_propvariant(pvar):
+	log.debug('deallocing propvariant')
+	if pvar == ffi.NULL:
+		log.debug('pvar == NULL')
+		return
+	log.debug('...')
 	free_propvariant(pvar)
+	log.debug('...')
 	C.free(pvar)
+	pvar = ffi.NULL
+	log.debug('...')
+	log.debug('dealloced propvariant')
 
 def alloc_propvariant():
-	#return ffi.gc(C.calloc(1, ffi.sizeof('PROPVARIANT')), dealloc_propvariant)
-	return ffi.new('PROPVARIANT*')
+	return ffi.gc(C.calloc(1, ffi.sizeof('PROPVARIANT')), dealloc_propvariant)
+	#return ffi.new('PROPVARIANT*')
 	
 def get_prop_val(fn, forcetype=None, checktype=None):
 	"""
@@ -85,7 +94,7 @@ def get_prop_val(fn, forcetype=None, checktype=None):
 	RNOK(fn(ptr))
 	pvar = ffi.cast('PROPVARIANT*', ptr)
 	vt = forcetype or pvar.vt
-	if pvar.vt in (VT_EMPTY, VT_NULL):
+	if pvar.vt in (VARTYPE.VT_EMPTY, VARTYPE.VT_NULL):
 		# always check for null, pvar.vt is not a bug
 		return None
 		
@@ -94,15 +103,15 @@ def get_prop_val(fn, forcetype=None, checktype=None):
 			checktype = forcetype
 		assert pvar.vt == checktype
 
-	if vt in (VT_UI4, VT_UINT):
+	if vt in (VARTYPE.VT_UI4, VARTYPE.VT_UINT):
 		return int(pvar.ulVal)
-	elif vt == VT_UI8:
+	elif vt == VARTYPE.VT_UI8:
 		return int(pvar.uhVal)
-	elif vt == VT_BOOL:
+	elif vt == VARTYPE.VT_BOOL:
 		return int(pvar.bVal) != 0
-	elif vt == VT_CLSID:
+	elif vt == VARTYPE.VT_CLSID:
 		return guidp2uu(pvar.puuid)
-	elif vt == VT_BSTR:
+	elif vt == VARTYPE.VT_BSTR:
 		return ffi.string(pvar.bstrVal)
 	else:
 		raise TypeError("type code %d not supported" % vt)

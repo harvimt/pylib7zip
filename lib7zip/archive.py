@@ -148,7 +148,7 @@ class Archive:
 	def __iter__(self):
 		log.debug('iter(Archive)')
 		for i in range(len(self)):
-			logging.debug('getting %dth item', i)
+			log.debug('getting %dth item', i)
 			yield self[i]
 			#isdir = get_bool_prop(i, py7ziptypes.kpidIsDir, self.itm_prop_fn)
 			#path = get_string_prop(i, py7ziptypes.kpidPath, self.itm_prop_fn)
