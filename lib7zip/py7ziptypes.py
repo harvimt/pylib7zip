@@ -252,7 +252,7 @@ IID_IGetFolderArcProps = createIID('08', '11')
 
 #PropID.h
 
-class ArchiveProps:
+class ArchiveProps(IntEnum):
 	"""Archive and Archive Item Propertys"""
 	noproperty = 0  # kpidNoProperty
 	mainsubfile = 1  # kpidMainSubfile
@@ -326,3 +326,8 @@ class OperationResult(Enum):
 	kUnSupportedMethod = 1
 	kDataError = 2
 	kCRCError = 3
+
+class AskMode(Enum):
+	kExtract = 0
+	kTest = 1
+	kSkip = 2

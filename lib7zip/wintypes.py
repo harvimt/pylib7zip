@@ -8,7 +8,12 @@ typedef unsigned short VARTYPE;
 
 typedef uint8_t GUID[16];
 
-typedef struct PROPVARIANT {
+typedef struct {
+	uint32_t dwLowDateTime;
+	uint32_t dwHighDateTime;
+} FILETIME;
+
+typedef struct {
 	VARTYPE           vt;
 	unsigned short    wReserved1;
 	unsigned short    wReserved2;
@@ -26,9 +31,10 @@ typedef struct PROPVARIANT {
 		wchar_t*          bstrVal;
 		uint64_t          uhVal;
 		GUID*             puuid;
+		FILETIME          filetime;
 		/* snip */
 	};
-	} PROPVARIANT;
+} PROPVARIANT;
 
 
 typedef uint32_t HRESULT;

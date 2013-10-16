@@ -7,6 +7,7 @@ from . import ffi, C, free_propvariant, log
 from .wintypes import *
 #from bitstring import BitArray
 #import warnings
+from datetime import datetime, timedelta
 
 def guidp2uuid(guid):
 	"""GUID* -> uuid.UUID"""
@@ -93,7 +94,7 @@ def get_prop_val(fn, forcetype=None, checktype=None):
 	ptr = alloc_propvariant()
 	RNOK(fn(ptr))
 	pvar = ffi.cast('PROPVARIANT*', ptr)
-	vt = forcetype or pvar.vt
+	vt = forcetype or VARTYPE(pvar.vt)
 	if pvar.vt in (VARTYPE.VT_EMPTY, VARTYPE.VT_NULL):
 		# always check for null, pvar.vt is not a bug
 		return None
@@ -113,5 +114,22 @@ def get_prop_val(fn, forcetype=None, checktype=None):
 		return guidp2uu(pvar.puuid)
 	elif vt == VARTYPE.VT_BSTR:
 		return ffi.string(pvar.bstrVal)
+	elif False: #vt == VARTYPE.VT_FILETIME:
+		#FIXME This should work but it totally doesn't
+		timestamp = int(pvar.filetime.dwLowDateTime)
+		timestamp += int(pvar.filetime.dwLowDateTime) << 32
+		#timestamp is in 100-nanosecond intervals, convert to nanoseconds
+		timestamp *= 100
+		#convert to seconds
+		timestamp /= 1e9
+
+		#timestamp is now the number of seconds since Jan 1, 1601 CE
+		jan01_1601 = datetime(year=1601, month=1, day=1)
+		delta = timedelta(seconds=timestamp)
+		import pdb; pdb.set_trace()
+		return jan01_1601 + delta
+		
+		# timestamp isn't guaranteed to be UTC (it isn't on FAT for example)
+		# it is however recommended, hope 7zip enforces that.
 	else:
 		raise TypeError("type code %d not supported" % vt)

@@ -1,23 +1,23 @@
 python-lib7zip
 ==============
-Python bindings for lib7zip_
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Python bindings for 7-Zip
+~~~~~~~~~~~~~~~~~~~~~~~~~
 :author: Mark Harviston <mark.harviston@gmail.com>
 :version: 0.1
 
 pylib7zip is a direct binding to 7z.dll from the 7-zip project (7zip.org)
 
-7z.dll uses Windows COM+ calling conventions with an over-engineered slightly pathological 
-OOP API.
+7z.dll uses Windows COM+ calling conventions without registering itself with the COM server
+and has an over-engineered slightly pathological OOP API.
 
-Currently only works on Windows with Python 3.3
+Currently only works on Windows with Python 3.3.
 
 This provides roughly the same functionality as lib7zip does for C++ and SevenZipSharp does for C#
 but with a clean Pythonic API.
 
 Like lib7zip getting metadata and extracting files are the only operations supported, creating archives, or updating them in-place is not supported.
 
-This is beta software and may crash if used in an unusual way.
+This is beta software and may crash if used in an unusual (or even a usual) way.
 
 Dependencies
 ------------

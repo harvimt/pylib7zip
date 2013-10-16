@@ -2,10 +2,10 @@ import os, os.path
 
 from .py7ziptypes import IID_ICryptoGetTextPassword, IID_IArchiveExtractCallback, \
 	IID_ISequentialOutStream, IID_ICompressProgressInfo, IID_ICryptoGetTextPassword2, \
-	OperationResult
+	OperationResult, AskMode
 
 from .wintypes import HRESULT
-from . import log, ffi, py7ziptypes
+from . import log, ffi, C, py7ziptypes
 from .simplecom import IUnknownImpl
 from .stream import FileOutStream
 
@@ -24,6 +24,14 @@ class ArchiveExtractCallback(IUnknownImpl):
 		#self.out_file = FileOutStream(file)
 		#self.password = ffi.new('char[]', (password or '').encode('ascii'))
 		self.password = ffi.new('wchar_t[]', password or '')
+		#password = password or ''
+		'''
+		self._password = ffi.gc(C.malloc(ffi.sizeof('wchar_t') * len(password) + 1), C.free)
+		self.password = ffi.cast('wchar_t*', self._password)
+		self.password[0:len(password)] = password
+		self.password[len(password)] = '\0'
+		'''
+		
 		super().__init__()
 	
 	def cleanup(self):
@@ -68,20 +76,19 @@ class ArchiveExtractCallback(IUnknownImpl):
 		assert password[0] == ffi.NULL
 		#log.debug('passowrd?=%s', ffi.string(password[0]))
 		#password = ffi.cast('wchar_t**', password)
-		#password[0] = self.password
+		password[0] = self.password
 		#password[0] = ffi.NULL
-		#log.debug('CryptoGetTextPassword returning, password=%s', ffi.string(password[0]))
+		log.debug('CryptoGetTextPassword returning, password=%s', ffi.string(password[0]))
 		return HRESULT.S_OK.value
 		#return len(self.password)
 
 	def CryptoGetTextPassword2(self, me, isdefined, password):
 		log.debug('CryptoGetTextPassword2 me=%r password=%r%r', me, ffi.string(self.password), self.password)
-		isdefined[0] = 1
+		isdefined[0] = bool(self.password)
 		password[0] = self.password
 		log.debug('CryptoGetTextPassword returning, password=%s', ffi.string(password[0]))
 		return HRESULT.S_OK.value
 
-	
 	#STDMETHOD(SetRatioInfo)(const UInt64 *inSize, const UInt64 *outSize) PURE;
 	def SetRatioInfo(self, me, in_size, out_size):
 		log.debug('SetRatioInfo: in_size=%d, out_size=%d' % (int(in_size[0]), int(out_size[0])))
@@ -100,11 +107,16 @@ class ArchiveExtractToDirectoryCallback(ArchiveExtractCallback):
 		super().__init__(password)
 	
 	def GetStream(self, me, index, outStream, askExtractMode):
-		log.debug('GetStream [%d]', index)
+		askExtractMode = AskMode(askExtractMode)
+		log.debug('GetStream(%d, -, %d)', index, askExtractMode)
+
+		if askExtractMode != AskMode.kExtract:
+			return HRESULT.S_OK.value
+
+		
 		path = os.path.join(self.directory, self.archive[index].path)
 		dirname = os.path.dirname(path)
 		log.debug('extracting to: %s', path)
-		
 		
 		if self.archive[index].isdir:
 			os.makedirs(path, exist_ok=True)
@@ -140,7 +152,12 @@ class ArchiveExtractToStreamCallback(ArchiveExtractCallback):
 		super().__init__(password)
 		
 	def GetStream(self, me, index, outStream, askExtractMode):
-		log.debug('GetStream')
+		askExtractMode = AskMode(askExtractMode)
+		log.debug('GetStream(%d, -, %d)', index, askExtractMode)
+
+		if askExtractMode != AskMode.kExtract:
+			return HRESULT.S_OK.value
+
 		if self.index == index:
 			outStream[0] = self.stream.instances[py7ziptypes.IID_ISequentialOutStream]
 			return HRESULT.S_OK.value

@@ -23,6 +23,7 @@ def IX(isdir=False, crc=None, contents=''):
 	#return _IX(isdir, crc, contents.encode('utf8') if contents is not None else None)
 	return _IX(isdir, crc, contents)
 J = os.path.join
+
 COMPLEX_MD = {
 	J('complex','articles'): IX(True),
 	J('complex','articles','the definate article.txt'): IX(False, 0x3C456DE6, 'the'),
@@ -40,7 +41,6 @@ def test_complex():
 	with Archive('tests/complex.7z') as archive:
 		for item in archive:
 			log.debug(item.path)
-			#print(item.path)
 			try:
 				md = COMPLEX_MD[item.path]
 			except KeyError as ex:
@@ -64,7 +64,10 @@ def test_extract_dir_complex(tmp_dir):
 	for path, md in COMPLEX_MD.items():
 		if md.contents:
 			with open(os.path.join(tmp_dir, path), encoding='utf-8') as f:
-				assert f.read() == md.contents
+				file_contents = f.read()
+				#if 'unicode' in path:
+				#	import pdb; pdb.set_trace()
+				assert file_contents == md.contents
 
 @pytest.mark.parametrize('path', simple_archives)
 def test_extract_stream(path):

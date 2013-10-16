@@ -40,6 +40,7 @@ HRESULT CreateObject(const GUID * clsID, const GUID * iid, void ** outObject);
 HRESULT SetLargePageMode(); /* Unused */
 
 void* calloc(size_t, size_t);
+void* malloc(size_t);
 void* memset(void*, int, size_t);
 void free(void*);
 
