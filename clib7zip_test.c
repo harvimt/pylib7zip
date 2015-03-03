@@ -21,23 +21,23 @@ int main(){
 
     uint32_t num_items;
     uint32_t i;
-    wchar_t path[128];
-    uint64_t crc;
+    PROPVARIANT* pvar = create_propvariant();
 
     if(archive_get_num_items(archive, &num_items) != S_OK){
         puts("Error"); return 1;
     }
     printf("num_items=%d\n", num_items);
     for(i = 0; i < num_items; i += 1){
-        if(archive_get_item_property_str(archive, i, kpidPath,
-                path, WCHAR_T_BUF_SIZE(path)) != S_OK){
-            puts("Error"); return 1;
-        }
-        if(archive_get_item_property_uint64(archive, i, kpidCRC, &crc) != S_OK){
-            puts("Error"); return 1;
-        }
-        printf("path=%ls, crc=%lx\n", path, crc);
+        assert(archive_get_item_property_pvar(archive, i, kpidCRC, pvar) == S_OK);
+        assert(pvar->vt == VT_UI4);
+        printf("crc=%lx\n", pvar->ulVal);
+
+        assert(archive_get_item_property_pvar(archive, i, kpidPath, pvar) == S_OK);
+        assert(pvar->vt == VT_BSTR);
+        printf("path=%ls\n", pvar->bstrVal);
     }
+
+    destroy_propvariant(pvar);
 
     puts("Closing...");
     archive_close(archive);

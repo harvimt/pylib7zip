@@ -13,9 +13,9 @@
 #include "Common/StringConvert.h"
 
 #include "Windows/DLL.h"
-#include "Windows/FileDir.h"
-#include "Windows/FileFind.h"
-#include "Windows/FileName.h"
+//#include "Windows/FileDir.h"
+//#include "Windows/FileFind.h"
+//#include "Windows/FileName.h"
 #include "Windows/NtCheck.h"
 #include "Windows/PropVariant.h"
 #include "Windows/PropVariantConversions.h"
@@ -232,13 +232,24 @@ void teardown_clib7zip(CLIB7ZIP* lib){
     free(lib);
 }
 
+PROPVARIANT* create_propvariant(){
+    return new NWindows::NCOM::CPropVariant();
+}
+void destroy_propvariant(PROPVARIANT* pvar){
+    ((NWindows::NCOM::CPropVariant*) pvar)->Clear();
+    delete pvar;
+}
+
 IInStream* create_instream_from_file(FILE* file){ return (IInStream*)(new CInFileStream(file)); } IInArchive* create_archive(const wchar_t* type) {
+    printf("Creating archive of type %ls\n", type);
     uint32_t num_formats;
     GetNumberOfFormats(&num_formats);
+    printf("num_formats=%d\n", num_formats);
     HRESULT res;
-    GUID* archive_guid;
+    GUID* archive_guid = NULL;
     IInArchive* archive;
     for (unsigned int i = 0; i < num_formats; i += 1){
+        printf("i=%d\n", i);
         NWindows::NCOM::CPropVariant prop;
         res = GetHandlerProperty2(i, NArchive::kName, &prop);
         if(res != S_OK){
@@ -253,6 +264,10 @@ IInStream* create_instream_from_file(FILE* file){ return (IInStream*)(new CInFil
         if(wcscmp(prop.bstrVal, type) == 0){
             res = GetHandlerProperty2(i, NArchive::kClassID, &prop);
             archive_guid = (GUID*) prop.bstrVal;
+        }
+        if(archive_guid == NULL){
+            puts("NULL ERROR");
+            return NULL;
         }
         res = CreateObject(archive_guid, &IID_IInArchive, (void**)(&archive));
         if (res != S_OK){
@@ -302,6 +317,14 @@ HRESULT archive_get_num_items(IInArchive* archive, uint32_t* num_items) {
     HRESULT res = archive->GetNumberOfItems(num_items);
     printf("-> num_items=%d\n", *num_items);
     return res;
+}
+
+HRESULT archive_get_item_property_pvar(
+    IInArchive* archive, uint32_t index, PROPID prop_id, PROPVARIANT* pvar)
+{
+    //*pvar = create_propvariant();
+    if(pvar == NULL){ puts("pvar is NULL"); return E_ABORT; }; //FIXME
+    return archive->GetProperty(index, prop_id, pvar);
 }
 
 HRESULT archive_get_item_property_str(
