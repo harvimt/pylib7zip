@@ -1,32 +1,96 @@
 from cffi import FFI
 ffi = FFI()
+
+with open("windowsdefs.h") as f:
+    ffi.cdef(f.read())
+
 ffi.cdef("""
+const GUID IID_IInArchive;
+
 enum {
-    S_OK = 0
+  kpidNoProperty = 0,
+  kpidMainSubfile = 1,
+  kpidHandlerItemIndex = 2,
+  kpidPath,
+  kpidName,
+  kpidExtension,
+  kpidIsDir,
+  kpidSize,
+  kpidPackSize,
+  kpidAttrib,
+  kpidCTime,
+  kpidATime,
+  kpidMTime,
+  kpidSolid,
+  kpidCommented,
+  kpidEncrypted,
+  kpidSplitBefore,
+  kpidSplitAfter,
+  kpidDictionarySize,
+  kpidCRC,
+  kpidType,
+  kpidIsAnti,
+  kpidMethod,
+  kpidHostOS,
+  kpidFileSystem,
+  kpidUser,
+  kpidGroup,
+  kpidBlock,
+  kpidComment,
+  kpidPosition,
+  kpidPrefix,
+  kpidNumSubDirs,
+  kpidNumSubFiles,
+  kpidUnpackVer,
+  kpidVolume,
+  kpidIsVolume,
+  kpidOffset,
+  kpidLinks,
+  kpidNumBlocks,
+  kpidNumVolumes,
+  kpidTimeType,
+  kpidBit64,
+  kpidBigEndian,
+  kpidCpu,
+  kpidPhySize,
+  kpidHeadersSize,
+  kpidChecksum,
+  kpidCharacts,
+  kpidVa,
+  kpidId,
+  kpidShortName,
+  kpidCreatorApp,
+  kpidSectorSize,
+  kpidPosixAttrib,
+  kpidLink,
+  kpidError,
+
+  kpidTotalSize = 0x1100,
+  kpidFreeSpace,
+  kpidClusterSize,
+  kpidVolumeName,
+
+  kpidLocalName = 0x1200,
+  kpidProvider,
+
+  kpidUserDefined = 0x10000
 };
 
-typedef uint32_t HRESULT;
+enum {
+    NArchive_kName = 0,
+    NArchive_kClassID,
+    NArchive_kExtension,
+    NArchive_kAddExtension,
+    NArchive_kUpdate,
+    NArchive_kKeepName,
+    NArchive_kStartSignature,
+    NArchive_kFinishSignature,
+    NArchive_kAssociate
+};
 
-typedef enum {
-    VT_EMPTY = 0,
-    VT_BSTR = 8,
-    VT_UI4 = 19
-} VARTYPE;
 
-typedef struct {
-    VARTYPE vt;
-    uint8_t wReserved1;
-    uint8_t wReserved2;
-    uint8_t wReserved3;
-    union {
-        uint64_t ulVal;
-        wchar_t* bstrVal;
-    };
-} PROPVARIANT;
-
-typedef struct CLIB7ZIP CLIB7ZIP;
-CLIB7ZIP* init_clib7zip(const char* lib_path);
-void teardown_clib7zip(CLIB7ZIP* lib);
+PROPVARIANT* create_propvariant();
+void destroy_propvariant(PROPVARIANT*);
 
 typedef struct IInArchive IInArchive;
 typedef struct IInStream IInStream;
@@ -48,7 +112,6 @@ typedef HRESULT (*_set_completed_callback)
 typedef HRESULT (*_get_password_callback)(void* self, wchar_t** password);
 
 //IInArchive
-IInArchive* create_archive(const wchar_t* type);
 void archive_release(IInArchive* archive);
 HRESULT archive_open(
     IInArchive* archive,
@@ -60,23 +123,25 @@ HRESULT archive_open(
     _set_completed_callback set_completed_callback /* optional */);
 
 HRESULT archive_get_num_items(IInArchive* archive, uint32_t* num_items);
-HRESULT archive_get_item_property_str(
-    IInArchive* archive, uint32_t index, uint32_t prop, wchar_t buf[], size_t buf_size);
-HRESULT archive_get_item_property_uint64(
-    IInArchive* archive, uint32_t index, uint32_t prop_id, uint64_t* out);
+HRESULT archive_get_item_property_pvar(
+    IInArchive* archive, uint32_t index, uint32_t prop, PROPVARIANT* pvar);
 
 HRESULT archive_close(IInArchive*);
 """)
 
 P7ZIPSOURCE='p7zip_9.20.1'
 clib7zip = ffi.verify(
-    '#include "clib7zip.h"',
+    """
+    #include "windowsdefs.h"
+    #include "clib7zip.h"
+    """,
     #modulename='clib7zip',
     sources=[
         'clib7zip.cpp',
         P7ZIPSOURCE + '/CPP/Common/MyWindows.cpp',
         P7ZIPSOURCE + '/CPP/Windows/PropVariant.cpp',
     ],
+    #library_dirs=['.'],
     libraries=['dl'],
     include_dirs=[
         '.',
@@ -93,18 +158,63 @@ clib7zip = ffi.verify(
     ],
 )
 
-lib7zip = clib7zip.init_clib7zip(ffi.NULL)
+ffi2 = FFI()
+with open("windowsdefs.h") as f:
+    ffi2.cdef(f.read())
+
+ffi2.cdef("""
+uint32_t GetNumberOfFormats(uint32_t*);
+uint32_t GetNumberOfMethods(uint32_t *);
+uint32_t GetMethodProperty(uint32_t index, uint32_t propID, void * value);
+uint32_t GetHandlerProperty2(uint32_t, uint32_t propID, void *);
+uint32_t CreateObject(GUID *, GUID *, void **);
+""")
+lib7zip = ffi2.dlopen("/usr/lib/p7zip/7z.so")
+
+def RNOK(hresult):
+    if hresult != clib7zip.S_OK:
+        raise Exception("HRESULT ERROR=%x" % hresult)
+
 with open("abc.7z", "rb") as f:
     print("Creating stream...")
     stream = clib7zip.create_instream_from_file(f);
     assert stream != ffi.NULL
     print("...Created")
     print("Creating archive...")
-    archive = clib7zip.create_archive("7z")
+    pvar = clib7zip.create_propvariant()
+    #ffi.gc(pvar, clib7zip.destroy_propvariant)
+    num_items = ffi.new("uint32_t*")
+    RNOK(lib7zip.GetNumberOfFormats(num_items))
+    print("num_items=%d" % num_items[0])
+    for i in range(num_items[0]):
+        print("i=%d" % i)
+        RNOK(lib7zip.GetHandlerProperty2(i, clib7zip.NArchive_kName, pvar))
+        print("7z=%s" % ffi.string(pvar.bstrVal))
+        if ffi.string(pvar.bstrVal) == "7z":
+            print("found it")
+            break
+
+    print("Creating Archive Object...")
+    RNOK(lib7zip.GetHandlerProperty2(i, clib7zip.NArchive_kClassID, pvar))
+    archive_p = ffi.new("void**")
+
+    RNOK(lib7zip.CreateObject(
+        ffi2.cast("GUID*", pvar.puuid),
+        ffi2.cast("GUID*", ffi2.addressof(clib7zip.IID_IInArchive)),
+        archive_p,
+    ))
+    archive = ffi.cast("IInArchive*", archive_p[0])
     assert archive != ffi.NULL
     print("...Created")
     print("Opening...");
     clib7zip.archive_open(archive, stream, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL);
     print("...Opened");
+    RNOK(clib7zip.archive_get_num_items(archive, num_items))
+    print("num_items=%d" % num_items[0])
+    for i in range(num_items[0]):
+        print("i=%d" % i)
+        RNOK(clib7zip.archive_get_item_property_pvar(archive, i, clib7zip.kpidPath, pvar))
+        assert pvar.vt == clib7zip.VT_BSTR
+        print("path=%s" % ffi.string(pvar.bstrVal))
 
-clib7zip.teardown_clib7zip(lib7zip)
+    clib7zip.destroy_propvariant(pvar)

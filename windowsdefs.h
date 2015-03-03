@@ -1,5 +1,3 @@
-#ifndef WIN_DEF_H
-#define WIN_DEF_H
 typedef uint32_t HRESULT;
 enum {
 	S_OK = 0x00000000,
@@ -94,5 +92,3 @@ typedef struct {
 		/* snip */
 	};
 } PROPVARIANT;
-
-#endif
