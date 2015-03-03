@@ -4,43 +4,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <wchar.h>
-#include <stdint.h>
-#include <dlfcn.h>
+
+#include "7zip/PropID.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef HRESULT
-enum {
-    S_OK = 0
-};
-
-typedef uint32_t HRESULT;
-
-typedef enum {
-    VT_EMPTY = 0,
-    VT_BSTR = 8,
-    VT_UI4 = 19
-} VARTYPE;
-
-typedef struct {
-    VARTYPE vt;
-    uint8_t wReserved1;
-    uint8_t wReserved2;
-    uint8_t wReserved3;
-    union {
-        uint64_t ulVal;
-        wchar_t* bstrVal;
-    };
-} PROPVARIANT;
-
-#endif
-
-typedef struct CLIB7ZIP CLIB7ZIP;
-CLIB7ZIP* init_clib7zip(const char* lib_path);
-void teardown_clib7zip(CLIB7ZIP* lib);
+typedef HRESULT (*_GetNumberOfFormats)(uint32_t*);
+typedef HRESULT (*_GetNumberOfMethods)(uint32_t *);
+typedef HRESULT (*_GetMethodProperty)(uint32_t index, uint32_t propID, PROPVARIANT * value);
+typedef HRESULT (*_GetHandlerProperty2)(uint32_t, uint32_t propID, PROPVARIANT *);
+typedef HRESULT (*_CreateObject)(const GUID *, const GUID *, void **);
 
 //PROPVARIANT
 PROPVARIANT* create_propvariant();

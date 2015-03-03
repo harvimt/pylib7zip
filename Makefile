@@ -1,3 +1,4 @@
+#Makes clib7zip_test
 P7ZIPSOURCE=p7zip_9.20.1
 CXXFLAGS=-g -Wall -DUNICODE -D_UNICODE \
 	-I. \
@@ -16,16 +17,14 @@ LDFLAGS=-ldl
 PROG=clib7zip_test
 OBJS= \
 	clib7zip.o \
+	clib7zip_test.o \
 	$(P7ZIPSOURCE)/CPP/Common/MyWindows.o \
 	$(P7ZIPSOURCE)/CPP/Windows/PropVariant.o
 
 all: clib7zip_test
-
-clib7zip_test: clib7zip_test.o libc7zip.a
-	$(CXX) $(LDFLAGS) clib7zip_test.o libc7zip.a -o $@
-
-libc7zip.a: $(OBJS)
-	ar rvf $@ $(OBJS)
+$(PROG): $(OBJS)
+%: %.o
+	$(CXX) $(LDFLAGS) $^ -o $@
 
 clean:
-	rm -f $(PROG) $(OBJS) libc7zip.a
+	rm -f $(PROG) $(OBJS)
