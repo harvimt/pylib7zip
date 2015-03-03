@@ -144,8 +144,7 @@ clib7zip = ffi.verify(
     #library_dirs=['.'],
     libraries=['dl'],
     include_dirs=[
-        '.',
-        P7ZIPSOURCE + '/CPP',
+        '.', P7ZIPSOURCE + '/CPP',
         P7ZIPSOURCE + '/CPP/7zip/UI/Client7z',
         P7ZIPSOURCE + '/CPP/myWindows',
         P7ZIPSOURCE + '/CPP/include_windows',
@@ -169,52 +168,56 @@ uint32_t GetMethodProperty(uint32_t index, uint32_t propID, void * value);
 uint32_t GetHandlerProperty2(uint32_t, uint32_t propID, void *);
 uint32_t CreateObject(GUID *, GUID *, void **);
 """)
-lib7zip = ffi2.dlopen("/usr/lib/p7zip/7z.so")
 
 def RNOK(hresult):
     if hresult != clib7zip.S_OK:
         raise Exception("HRESULT ERROR=%x" % hresult)
 
-with open("abc.7z", "rb") as f:
-    print("Creating stream...")
-    stream = clib7zip.create_instream_from_file(f);
-    assert stream != ffi.NULL
-    print("...Created")
-    print("Creating archive...")
-    pvar = clib7zip.create_propvariant()
-    #ffi.gc(pvar, clib7zip.destroy_propvariant)
-    num_items = ffi.new("uint32_t*")
-    RNOK(lib7zip.GetNumberOfFormats(num_items))
-    print("num_items=%d" % num_items[0])
-    for i in range(num_items[0]):
-        print("i=%d" % i)
-        RNOK(lib7zip.GetHandlerProperty2(i, clib7zip.NArchive_kName, pvar))
-        print("7z=%s" % ffi.string(pvar.bstrVal))
-        if ffi.string(pvar.bstrVal) == "7z":
-            print("found it")
-            break
+def main():
+    lib7zip = ffi2.dlopen("/usr/lib/p7zip/7z.so")
+    pvar = ffi.gc(clib7zip.create_propvariant(), clib7zip.destroy_propvariant)
+    with open("abc.7z", "rb") as f:
+        print("Creating stream...")
+        stream = clib7zip.create_instream_from_file(f);
+        assert stream != ffi.NULL
+        print("...Created")
+        print("Creating archive...")
+        num_items = ffi.new("uint32_t*")
+        RNOK(lib7zip.GetNumberOfFormats(num_items))
+        print("num_items=%d" % num_items[0])
+        for i in range(num_items[0]):
+            print("i=%d" % i)
+            RNOK(lib7zip.GetHandlerProperty2(i, clib7zip.NArchive_kName, pvar))
+            print("7z=%s" % ffi.string(pvar.bstrVal))
+            if ffi.string(pvar.bstrVal) == "7z":
+                print("found it")
+                break
 
-    print("Creating Archive Object...")
-    RNOK(lib7zip.GetHandlerProperty2(i, clib7zip.NArchive_kClassID, pvar))
-    archive_p = ffi.new("void**")
+        print("Creating Archive Object...")
+        RNOK(lib7zip.GetHandlerProperty2(i, clib7zip.NArchive_kClassID, pvar))
+        archive_p = ffi.new("void**")
 
-    RNOK(lib7zip.CreateObject(
-        ffi2.cast("GUID*", pvar.puuid),
-        ffi2.cast("GUID*", ffi2.addressof(clib7zip.IID_IInArchive)),
-        archive_p,
-    ))
-    archive = ffi.cast("IInArchive*", archive_p[0])
-    assert archive != ffi.NULL
-    print("...Created")
-    print("Opening...");
-    clib7zip.archive_open(archive, stream, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL);
-    print("...Opened");
-    RNOK(clib7zip.archive_get_num_items(archive, num_items))
-    print("num_items=%d" % num_items[0])
-    for i in range(num_items[0]):
-        print("i=%d" % i)
-        RNOK(clib7zip.archive_get_item_property_pvar(archive, i, clib7zip.kpidPath, pvar))
-        assert pvar.vt == clib7zip.VT_BSTR
-        print("path=%s" % ffi.string(pvar.bstrVal))
+        RNOK(lib7zip.CreateObject(
+            ffi2.cast("GUID*", pvar.puuid),
+            ffi2.cast("GUID*", ffi2.addressof(clib7zip.IID_IInArchive)),
+            archive_p,
+        ))
+        archive = ffi.cast("IInArchive*", archive_p[0])
+        assert archive != ffi.NULL
+        print("...Created")
+        print("Opening...");
+        clib7zip.archive_open(archive, stream, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL);
+        print("...Opened");
+        RNOK(clib7zip.archive_get_num_items(archive, num_items))
+        print("num_items=%d" % num_items[0])
+        for i in range(num_items[0]):
+            print("i=%d" % i)
+            RNOK(clib7zip.archive_get_item_property_pvar(archive, i, clib7zip.kpidPath, pvar))
+            assert pvar.vt == clib7zip.VT_BSTR
+            print("path=%s" % ffi.string(pvar.bstrVal))
+        print("Closing...")
+        RNOK(clib7zip.archive_close(archive))
+        print("...Closing")
 
-    clib7zip.destroy_propvariant(pvar)
+if __name__ == '__main__':
+    main()
