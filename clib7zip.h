@@ -5,11 +5,26 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "7zip/PropID.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "7zip/PropID.h"
+
+//GUIDs
+extern const GUID IID_IInArchive;
+
+enum {
+    NArchive_kName = 0,
+    NArchive_kClassID,
+    NArchive_kExtension,
+    NArchive_kAddExtension,
+    NArchive_kUpdate,
+    NArchive_kKeepName,
+    NArchive_kStartSignature,
+    NArchive_kFinishSignature,
+    NArchive_kAssociate
+};
 
 typedef HRESULT (*_GetNumberOfFormats)(uint32_t*);
 typedef HRESULT (*_GetNumberOfMethods)(uint32_t *);
