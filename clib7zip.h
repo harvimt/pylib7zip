@@ -26,12 +26,6 @@ enum {
     NArchive_kAssociate
 };
 
-typedef HRESULT (*_GetNumberOfFormats)(uint32_t*);
-typedef HRESULT (*_GetNumberOfMethods)(uint32_t *);
-typedef HRESULT (*_GetMethodProperty)(uint32_t index, uint32_t propID, PROPVARIANT * value);
-typedef HRESULT (*_GetHandlerProperty2)(uint32_t, uint32_t propID, PROPVARIANT *);
-typedef HRESULT (*_CreateObject)(const GUID *, const GUID *, void **);
-
 //PROPVARIANT
 PROPVARIANT* create_propvariant();
 void destroy_propvariant(PROPVARIANT*);
@@ -40,6 +34,14 @@ void destroy_propvariant(PROPVARIANT*);
 
 typedef struct IInArchive IInArchive;
 typedef struct IInStream IInStream;
+
+// Globals
+HRESULT _GetNumberOfFormats(uint32_t*);
+HRESULT _GetNumberOfMethods(uint32_t *);
+HRESULT _GetMethodProperty(uint32_t index, uint32_t propID, PROPVARIANT * value);
+HRESULT _GetHandlerProperty2(uint32_t, uint32_t propID, PROPVARIANT *);
+HRESULT _CreateObject(const GUID *, const GUID *, void **);
+
 
 //IInStream
 typedef HRESULT (*_stream_read_callback)

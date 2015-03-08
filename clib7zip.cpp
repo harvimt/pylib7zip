@@ -7,7 +7,7 @@
 #include <errno.h>
 
 #include "StdAfx.h"
-#include "Common/MyInitGuid.h"
+//#include "Common/MyInitGuid.h"
 #include "Windows/PropVariant.h"
 
 #include "Common/MyCom.h"

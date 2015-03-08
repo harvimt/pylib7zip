@@ -1,0 +1,4 @@
+p7zip_*
+__pycache__/*
+*.sw[po]
+*.pyc
