@@ -1,4 +1,8 @@
 p7zip_*
-__pycache__/*
+__pycache__
 *.sw[po]
 *.pyc
+*.egg-info
+build/
+dist/
+wheelhouse/
