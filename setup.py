@@ -5,12 +5,8 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import platform
-import subprocess
 import sys
 from distutils.command.build import build
-
-import pkg_resources
 
 from setuptools import find_packages, setup
 from setuptools.command.install import install
@@ -47,7 +43,7 @@ test_requirements = [
 
 def get_ext_modules():
     import lib7zip._lib7zip
-    return [ lib7zip._lib7zip.ffi.verifier.get_extension()]
+    return [lib7zip._lib7zip.ffi.verifier.get_extension()]
 
 
 class CFFIBuild(build):
@@ -254,23 +250,24 @@ setup(
 
     classifiers=[
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
+        "License :: OSI Approved :: GNU Lesser General Public License "
+        "v2 or later (LGPLv2+)",
         "Natural Language :: English",
         # "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
-        #"Operating System :: POSIX :: BSD",
+        # "Operating System :: POSIX :: BSD",
         "Operating System :: POSIX :: Linux",
-        #"Operating System :: Microsoft :: Windows",
-        #"Programming Language :: Python",
-        #"Programming Language :: Python :: 2",
-        #"Programming Language :: Python :: 2.6",
-        #"Programming Language :: Python :: 2.7",
+        # "Operating System :: Microsoft :: Windows",
+        # "Programming Language :: Python",
+        # "Programming Language :: Python :: 2",
+        # "Programming Language :: Python :: 2.6",
+        # "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        #"Programming Language :: Python :: 3.2",
-        #Programming Language :: Python :: 3.3",
+        # "Programming Language :: Python :: 3.2",
+        # "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: Implementation :: CPython",
-        #"Programming Language :: Python :: Implementation :: PyPy",
+        # "Programming Language :: Python :: Implementation :: PyPy",
     ],
 
     package_dir={"": "src"},

@@ -1,6 +1,9 @@
 """
 This contains all the CFFI build code, like setting up the verifier.
 """
+from __future__ import unicode_literals, absolute_import, \
+    division, print_function
+from future.builtins import *  # noqa
 import binascii
 import sys
 import threading
@@ -125,7 +128,8 @@ HRESULT archive_open(
     IInStream* in_stream,
     void* data /* optional - passed to callbacks as first arg */,
     wchar_t* password, /* optional */
-    _get_password_callback get_password_callback, /* optional - takes precedence over password */
+    /* optional - takes precedence over password */
+    _get_password_callback get_password_callback,
     _set_total_callback set_total_callback, /* optional */
     _set_completed_callback set_completed_callback /* optional */);
 
