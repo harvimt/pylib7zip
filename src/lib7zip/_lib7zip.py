@@ -1,8 +1,6 @@
-"""
-This contains all the CFFI build code, like setting up the verifier.
-"""
-from __future__ import unicode_literals, absolute_import, \
-    division, print_function
+"""This contains all the CFFI build code, like setting up the verifier."""
+from __future__ import absolute_import, division, print_function
+# NOTE: no unicode_literals, distutils/setuptools requires bytes on python 2.
 from future.builtins import *  # noqa
 import binascii
 import sys
@@ -19,10 +17,8 @@ P7ZIPSOURCE = 'p7zip_9.20.1'
 
 
 def _create_modulename(cdef_sources, source, sys_version):
-    """
-    This is the same as CFFI's create modulename except we don't include the
-    CFFI version.
-    """
+    # This is the same as CFFI's create modulename except we don't include the
+    # CFFI version.
     from .__about__ import __title__
     key = '\x00'.join([sys_version[:3], source, cdef_sources])
     key = key.encode('utf-8')
@@ -30,7 +26,7 @@ def _create_modulename(cdef_sources, source, sys_version):
     k1 = k1.lstrip('0x').rstrip('L')
     k2 = hex(binascii.crc32(key[1::2]) & 0xffffffff)
     k2 = k2.lstrip('0').rstrip('L')
-    return '_{}_cffi_{}{}'.format(__title__, k1, k2)
+    return '_{0}_cffi_{1}{2}'.format(__title__, k1, k2)
 
 
 def _compile_module(*args, **kwargs):
@@ -40,10 +36,10 @@ def _compile_module(*args, **kwargs):
     )
 
 
-class LazyRawLib7zip(object):
-    """
-    Lazy reference to the raw 7zip library
-    """
+class _LazyRawLib7zip(object):
+
+    """Lazy reference to the raw 7-zip library."""
+
     def __init__(self, ffi):
         self._ffi = ffi
         self._lib = None
@@ -59,11 +55,173 @@ class LazyRawLib7zip(object):
 
 CDEFS = []
 
-with open(os.path.join(SRCDIR, "windowsdefs.h")) as f:
-    CDEFS.append(f.read())
+CDEFS.append("""
+typedef uint32_t HRESULT;
+enum {
+    S_OK = 0x00000000,
+    S_FALSE = -1,
+    E_ABORT = 0x80004004,
+    E_ACCESSDENIED = 0x80070005,
+    E_FAIL = 0x80004005,
+    E_HANDLE = 0x80070006,
+    E_INVALIDARG = 0x80070057,
+    E_NOINTERFACE = 0x80004002,
+    E_NOTIMPL = 0x80004001,
+    E_OUTOFMEMORY = 0x8007000E,
+    E_POINTER = 0x80004003,
+    E_UNEXPECTED = 0x8000FFFF
+};
 
-with open(os.path.join(SRCDIR, P7ZIPSOURCE, "CPP/7zip/PropID.h")) as f:
-    CDEFS.append('\n'.join(l for l in f if not l.startswith('#')))
+typedef unsigned short VARTYPE;
+enum {
+    VT_EMPTY = 0,
+    VT_NULL = 1,
+    VT_I1 = 16,
+    VT_UI1 = 17,
+    VT_I2 = 2,
+    VT_UI2 = 18,
+    VT_I4 = 3,
+    VT_UI4 = 19,
+    VT_INT = 22,
+    VT_UINT = 23,
+    VT_I8 = 20,
+    VT_UI8 = 21,
+    VT_R4 = 4,
+    VT_R8 = 5,
+    VT_BOOL = 11,
+    VT_ERROR = 10,
+    VT_CY = 6,
+    VT_DATE = 7,
+    VT_FILETIME = 64,
+    VT_CLSID = 72,
+    VT_CF = 71,
+    VT_BSTR = 8,
+    VT_BSTR_BLOB = 0xfff,
+    VT_BLOB = 65,
+    VT_BLOBOBJECT = 70,
+    VT_LPSTR = 30,
+    VT_LPWSTR = 31,
+    VT_UNKNOWN = 13,
+    VT_DISPATCH = 9,
+    VT_STREAM = 66,
+    VT_STREAMED_OBJECT = 68,
+    VT_STORAGE = 67,
+    VT_STORED_OBJECT = 69,
+    VT_VERSIONED_STREAM = 73,
+    VT_DECIMAL = 14,
+    VT_VECTOR = 0x1000,
+    VT_ARRAY = 0x2000,
+    VT_BYREF = 0x4000,
+    VT_VARIANT = 12,
+    VT_TYPEMASK = 0xFFF
+};
+
+typedef struct GUID {
+    uint32_t  Data1;
+    uint16_t  Data2;
+    uint16_t  Data3;
+    uint8_t   Data4[8];
+} GUID;
+
+typedef struct {
+    uint32_t dwLowDateTime;
+    uint32_t dwHighDateTime;
+} FILETIME;
+
+typedef struct {
+    VARTYPE           vt;
+    unsigned short    wReserved1;
+    unsigned short    wReserved2;
+    unsigned short    wReserved3;
+    union {
+        char              cVal;
+        uint8_t           bVal;
+        int16_t           iVal;
+        uint16_t          uiVal;
+        int32_t           lVal;
+        uint32_t          ulVal;
+        float             fltVal;
+        double            dblVal;
+        char*             pcVal;
+        wchar_t*          bstrVal;
+        uint64_t          uhVal;
+        GUID*             puuid;
+        FILETIME          filetime;
+        /* snip */
+    };
+} PROPVARIANT;""")
+
+CDEFS.append("""
+enum
+{
+  kpidNoProperty = 0,
+  kpidMainSubfile = 1,
+  kpidHandlerItemIndex = 2,
+  kpidPath,
+  kpidName,
+  kpidExtension,
+  kpidIsDir,
+  kpidSize,
+  kpidPackSize,
+  kpidAttrib,
+  kpidCTime,
+  kpidATime,
+  kpidMTime,
+  kpidSolid,
+  kpidCommented,
+  kpidEncrypted,
+  kpidSplitBefore,
+  kpidSplitAfter,
+  kpidDictionarySize,
+  kpidCRC,
+  kpidType,
+  kpidIsAnti,
+  kpidMethod,
+  kpidHostOS,
+  kpidFileSystem,
+  kpidUser,
+  kpidGroup,
+  kpidBlock,
+  kpidComment,
+  kpidPosition,
+  kpidPrefix,
+  kpidNumSubDirs,
+  kpidNumSubFiles,
+  kpidUnpackVer,
+  kpidVolume,
+  kpidIsVolume,
+  kpidOffset,
+  kpidLinks,
+  kpidNumBlocks,
+  kpidNumVolumes,
+  kpidTimeType,
+  kpidBit64,
+  kpidBigEndian,
+  kpidCpu,
+  kpidPhySize,
+  kpidHeadersSize,
+  kpidChecksum,
+  kpidCharacts,
+  kpidVa,
+  kpidId,
+  kpidShortName,
+  kpidCreatorApp,
+  kpidSectorSize,
+  kpidPosixAttrib,
+  kpidLink,
+  kpidError,
+
+  kpidTotalSize = 0x1100,
+  kpidFreeSpace,
+  kpidClusterSize,
+  kpidVolumeName,
+
+  kpidLocalName = 0x1200,
+  kpidProvider,
+
+  kpidUserDefined = 0x10000
+};
+""")
 
 CDEFS.append("""
 #define MY_VER_MAJOR ...
@@ -171,7 +329,6 @@ verify_kwargs = dict(
     ],
     define_macros=[
         ('_FILE_OFFSET_BITS', '64'),
-        ('_LARGEFILE_SOURCE', True),
         ('_REENTRENT', True),
     ],
     sources=[
@@ -429,4 +586,4 @@ ffi.verifier = Verifier(ffi, SOURCE, **verify_kwargs)
 ffi.verifier.compile_module = _compile_module
 ffi.verifier._compile_module = _compile_module
 
-_lib7zip = LazyRawLib7zip(ffi)
+_lib7zip = _LazyRawLib7zip(ffi)

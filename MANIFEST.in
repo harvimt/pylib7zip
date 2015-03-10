@@ -1,0 +1,3 @@
+graft src/p7zip_9.20.1
+recursive-include src *.h
+include LICENSE.txt

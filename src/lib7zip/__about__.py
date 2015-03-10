@@ -1,3 +1,4 @@
+"""Metadata varaibles defined once here."""
 __title__ = "pylib7zip"
 __author__ = "Mark Harviston"
 __email__ = "mark.harviston@gmail.com"

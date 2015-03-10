@@ -23,13 +23,10 @@ about = {}
 with open(os.path.join(src_dir, "lib7zip", "__about__.py")) as f:
     exec(f.read(), about)
 
-
-SETUPTOOLS_DEPENDENCY = "setuptools"
-CFFI_DEPENDENCY = "cffi>=0.9"  # need 0.9 for .set_unicode(True)
-
 requirements = [
-    CFFI_DEPENDENCY,
-    SETUPTOOLS_DEPENDENCY
+    "cffi>=0.9",
+    "setuptools",
+    "future",
 ]
 
 if sys.version_info < (3, 4):
@@ -47,6 +44,7 @@ def get_ext_modules():
 
 
 class CFFIBuild(build):
+
     """
     This class exists, instead of just providing ``ext_modules=[...]`` directly
     in ``setup()`` because importing cryptography requires we have several
@@ -62,6 +60,7 @@ class CFFIBuild(build):
 
 
 class CFFIInstall(install):
+
     """
     As a consequence of CFFIBuild and it's late addition of ext_modules, we
     need the equivalent for the ``install`` command to install into platlib
@@ -88,6 +87,7 @@ class PyTest(test):
 
 
 def keywords_with_side_effects(argv):
+
     """
     Get a dictionary with setup keywords that (can) have side effects.
 
@@ -200,6 +200,7 @@ setup_requires_error = ("Requested setup command that needs 'setup_requires' "
 
 
 class DummyCFFIBuild(build):
+
     """
     This class makes it very obvious when ``keywords_with_side_effects()`` has
     incorrectly interpreted the command line arguments to ``setup.py build`` as
@@ -211,6 +212,7 @@ class DummyCFFIBuild(build):
 
 
 class DummyCFFIInstall(install):
+
     """
     This class makes it very obvious when ``keywords_with_side_effects()`` has
     incorrectly interpreted the command line arguments to ``setup.py install``
@@ -222,6 +224,7 @@ class DummyCFFIInstall(install):
 
 
 class DummyPyTest(test):
+
     """
     This class makes it very obvious when ``keywords_with_side_effects()`` has
     incorrectly interpreted the command line arguments to ``setup.py test`` as
@@ -258,13 +261,13 @@ setup(
         # "Operating System :: POSIX :: BSD",
         "Operating System :: POSIX :: Linux",
         # "Operating System :: Microsoft :: Windows",
-        # "Programming Language :: Python",
-        # "Programming Language :: Python :: 2",
-        # "Programming Language :: Python :: 2.6",
-        # "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         # "Programming Language :: Python :: 3.2",
-        # "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: Implementation :: CPython",
         # "Programming Language :: Python :: Implementation :: PyPy",
@@ -272,7 +275,6 @@ setup(
 
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=["tests", "tests.*"]),
-    include_package_data=True,
 
     install_requires=requirements,
     tests_require=test_requirements,
