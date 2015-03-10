@@ -5,9 +5,9 @@
 #include <stdint.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <stdarg.h>
 
 #include "StdAfx.h"
-//#include "Common/MyInitGuid.h"
 #include "Windows/PropVariant.h"
 
 #include "Common/MyCom.h"
@@ -17,6 +17,25 @@
 #include "7zip/IPassword.h"
 
 #include "clib7zip.h"
+
+static void (*log_debug_cb)(const char*) = NULL;
+
+void set_logger_cb(void(*cb)(const char*)) {
+    log_debug_cb = cb;
+}
+
+static inline void LOG_DEBUG(const char* fmt, ...){
+    char buffer[256];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+    if (log_debug_cb == NULL){
+        fprintf(stderr, "%s\n", buffer);
+    } else {
+        log_debug_cb(buffer);
+    }
+}
 
 class CInFileStream:
   public IInStream,
@@ -37,7 +56,7 @@ private:
 };
 
 STDMETHODIMP CInFileStream::Read (void *data, UInt32 size, UInt32 *processedSize) {
-    puts("FileIInStream::Read");
+    LOG_DEBUG("FileIInStream::Read");
     if(processedSize !=  NULL){
         *processedSize = fread(data, sizeof(uint8_t), size, file_ptr);
     }else{
@@ -51,8 +70,8 @@ STDMETHODIMP CInFileStream::Read (void *data, UInt32 size, UInt32 *processedSize
 #endif
 
 STDMETHODIMP CInFileStream::Seek (Int64 offset, UInt32 seekOrigin, UInt64 *newPosition){
-    printf("CFileInStream::Seek(%lld, %u, %p)\n", offset, seekOrigin, newPosition);
-    if (file_ptr == NULL){ puts("file_ptr is NULL"); return E_ABORT; };
+    LOG_DEBUG("CFileInStream::Seek(%lld, %u, %p)", offset, seekOrigin, newPosition);
+    if (file_ptr == NULL){ LOG_DEBUG("file_ptr is NULL"); return E_ABORT; };
     if(fseeko64(file_ptr, offset, seekOrigin) == -1){
         perror("fseek failed");
         return E_ABORT;
@@ -64,7 +83,7 @@ STDMETHODIMP CInFileStream::Seek (Int64 offset, UInt32 seekOrigin, UInt64 *newPo
 }
 
 STDMETHODIMP CInFileStream::GetSize(UInt64 *size){
-    printf("CFileInStream::GetSize(%p)\n", size);
+    LOG_DEBUG("CFileInStream::GetSize(%p)", size);
     if (size == NULL) { return S_OK; }
     off64_t offset = ftello64(file_ptr);
     if(fseeko64(file_ptr, 0, SEEK_END) == -1){
@@ -109,21 +128,21 @@ private:
 
 STDMETHODIMP CArchiveOpenCallback::SetTotal(const UInt64 * files, const UInt64 * bytes)
 {
-    puts("CArchiveOpenCallback::SetTotal");
+    LOG_DEBUG("CArchiveOpenCallback::SetTotal");
     if (set_total_callback == NULL) return S_OK;
     return set_total_callback(data, (const uint64_t*)(files), (const uint64_t*)(bytes));
 }
 
 STDMETHODIMP CArchiveOpenCallback::SetCompleted(const UInt64 * files, const UInt64 * bytes)
 {
-    puts("CArchiveOpenCallback::SetCompleted");
+    LOG_DEBUG("CArchiveOpenCallback::SetCompleted");
     if (set_completed_callback == NULL) return S_OK;
     return set_completed_callback(data, (const uint64_t*)(files), (const uint64_t*)(bytes));
 }
 
 STDMETHODIMP CArchiveOpenCallback::CryptoGetTextPassword(BSTR *password)
 {
-    puts("CArchiveOpenCallback::CryptoGetTextPassword");
+    LOG_DEBUG("CArchiveOpenCallback::CryptoGetTextPassword");
     if (get_password_callback != NULL){
         return get_password_callback(data, password);
     } else if (user_password != NULL && password != NULL){
@@ -175,11 +194,11 @@ void archive_release(IInArchive* archive){
 }
 
 HRESULT archive_get_num_items(IInArchive* archive, uint32_t* num_items) {
-    if(archive == NULL){ puts("archive is NULL"); return 0; }; //FIXME
-    if(num_items == NULL){ puts("num_items is NULL"); return 0; }; // FIXME
+    if(archive == NULL){ LOG_DEBUG("archive is NULL"); return 0; }; //FIXME
+    if(num_items == NULL){ LOG_DEBUG("num_items is NULL"); return 0; }; // FIXME
 
     HRESULT res = archive->GetNumberOfItems(num_items);
-    printf("-> num_items=%d\n", *num_items);
+    LOG_DEBUG("-> num_items=%d", *num_items);
     return res;
 }
 
@@ -187,6 +206,6 @@ HRESULT archive_get_item_property_pvar(
     IInArchive* archive, uint32_t index, PROPID prop_id, PROPVARIANT* pvar)
 {
     //*pvar = create_propvariant();
-    if(pvar == NULL){ puts("pvar is NULL"); return E_ABORT; }; //FIXME
+    if(pvar == NULL){ LOG_DEBUG("pvar is NULL"); return E_ABORT; }; //FIXME
     return archive->GetProperty(index, prop_id, pvar);
 }

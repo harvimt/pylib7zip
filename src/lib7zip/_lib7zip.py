@@ -12,7 +12,7 @@ ffi = FFI()
 ffi.set_unicode(True)
 
 SRCDIR = os.path.dirname(os.path.dirname(__file__))
-P7ZIPSOURCE = os.path.join(SRCDIR, 'p7zip_9.20.1')
+P7ZIPSOURCE = 'p7zip_9.20.1'
 
 
 def _create_modulename(cdef_sources, source, sys_version):
@@ -20,13 +20,14 @@ def _create_modulename(cdef_sources, source, sys_version):
     This is the same as CFFI's create modulename except we don't include the
     CFFI version.
     """
+    from .__about__ import __title__
     key = '\x00'.join([sys_version[:3], source, cdef_sources])
     key = key.encode('utf-8')
     k1 = hex(binascii.crc32(key[0::2]) & 0xffffffff)
     k1 = k1.lstrip('0x').rstrip('L')
     k2 = hex(binascii.crc32(key[1::2]) & 0xffffffff)
     k2 = k2.lstrip('0').rstrip('L')
-    return '_Example_cffi_{0}{1}'.format(k1, k2)
+    return '_{}_cffi_{}{}'.format(__title__, k1, k2)
 
 
 def _compile_module(*args, **kwargs):
@@ -58,10 +59,23 @@ CDEFS = []
 with open(os.path.join(SRCDIR, "windowsdefs.h")) as f:
     CDEFS.append(f.read())
 
-with open(os.path.join(P7ZIPSOURCE, "CPP/7zip/PropID.h")) as f:
+with open(os.path.join(SRCDIR, P7ZIPSOURCE, "CPP/7zip/PropID.h")) as f:
     CDEFS.append('\n'.join(l for l in f if not l.startswith('#')))
 
 CDEFS.append("""
+#define MY_VER_MAJOR ...
+#define MY_VER_MINOR ...
+#define MY_VER_BUILD ...
+const char* C_MY_VERSION;
+const char* C_MY_7ZIP_VERSION;
+const char* C_MY_DATE;
+const char* C_MY_COPYRIGHT;
+const char* C_MY_VERSION_COPYRIGHT_DATE;
+
+const char* C_P7ZIP_VERSION;
+
+void set_logger_cb(void(const char*));
+
 const GUID IID_IInArchive;
 
 enum {
@@ -125,6 +139,15 @@ HRESULT archive_close(IInArchive*);
 SOURCE = """
 #include "windowsdefs.h"
 #include "clib7zip.h"
+#include "7zip/MyVersion.h"
+
+const char* C_MY_VERSION = MY_VERSION;
+const char* C_MY_7ZIP_VERSION = MY_7ZIP_VERSION;
+const char* C_MY_DATE = MY_DATE;
+const char* C_MY_COPYRIGHT = MY_COPYRIGHT;
+const char* C_MY_VERSION_COPYRIGHT_DATE = MY_VERSION_COPYRIGHT_DATE;
+
+const char* C_P7ZIP_VERSION = P7ZIP_VERSION;
 """
 
 CDEF = '\n'.join(CDEFS)
@@ -133,10 +156,24 @@ ffi.cdef(CDEF)
 verify_kwargs = dict(
     modulename=_create_modulename(CDEF, SOURCE, sys.version),
     relative_to=SRCDIR,
+    ext_package='lib7zip',
+    tmpdir='',
+    include_dirs=[
+        SRCDIR,
+        os.path.join(SRCDIR, P7ZIPSOURCE, 'CPP'),
+        os.path.join(SRCDIR, P7ZIPSOURCE, 'CPP/7zip/UI/Client7z'),
+        os.path.join(SRCDIR, P7ZIPSOURCE, 'CPP/myWindows'),
+        os.path.join(SRCDIR, P7ZIPSOURCE, 'CPP/include_windows'),
+    ],
+    define_macros=[
+        ('_FILE_OFFSET_BITS', '64'),
+        ('_LARGEFILE_SOURCE', True),
+        ('_REENTRENT', True),
+    ],
     sources=[
         os.path.join(SRCDIR, 'clib7zip.cpp'),
     ] + [
-        os.path.join(P7ZIPSOURCE, p)
+        os.path.join(SRCDIR, P7ZIPSOURCE, p)
         for p in [
             'CPP/myWindows/wine_date_and_time.cpp',
             'CPP/myWindows/myGetTickCount.cpp',
@@ -379,25 +416,13 @@ verify_kwargs = dict(
             'C/Threads.c',
         ]
     ],
-    include_dirs=[
-        SRCDIR,
-        P7ZIPSOURCE + '/CPP',
-        P7ZIPSOURCE + '/CPP/7zip/UI/Client7z',
-        P7ZIPSOURCE + '/CPP/myWindows',
-        P7ZIPSOURCE + '/CPP/include_windows',
-    ],
-    define_macros=[
-        ('_FILE_OFFSET_BITS', '64'),
-        ('_LARGEFILE_SOURCE',),
-        ('_REENTRENT',),
-    ],
 )
 
 ffi._apply_windows_unicode(verify_kwargs)
 ffi.verifier = Verifier(ffi, SOURCE, **verify_kwargs)
 
 # Patch the Verifier() instance to prevent CFFI from compiling the module
-#ffi.verifier.compile_module = _compile_module
-#ffi.verifier._compile_module = _compile_module
+ffi.verifier.compile_module = _compile_module
+ffi.verifier._compile_module = _compile_module
 
 _lib7zip = LazyRawLib7zip(ffi)

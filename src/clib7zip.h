@@ -14,6 +14,8 @@ extern "C" {
 //GUIDs
 extern const GUID IID_IInArchive;
 
+void set_logger_cb(void(const char*));
+
 enum {
     NArchive_kName = 0,
     NArchive_kClassID,

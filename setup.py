@@ -274,7 +274,7 @@ setup(
     ],
 
     package_dir={"": "src"},
-    packages=find_packages(exclude=["tests", "tests.*"]),
+    packages=find_packages(where="src", exclude=["tests", "tests.*"]),
     include_package_data=True,
 
     install_requires=requirements,

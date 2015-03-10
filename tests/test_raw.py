@@ -11,6 +11,22 @@ BASEDIR = os.path.join(os.path.dirname(__file__), 'files')
 def open_test_file(path, mode='rb'):
     return open(os.path.join(BASEDIR, path), "rb")
 
+
+@ffi.callback('void(const char*)')
+def log_debug_cb(msg):
+    logger.debug(ffi.string(msg).decode('utf8'))
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_logging():
+    _lib7zip.set_logger_cb(log_debug_cb)
+
+
+def test_version():
+    version = ffi.string(_lib7zip.C_MY_7ZIP_VERSION)
+    logger.debug(version)
+
+
 def test_raw_all():
     global logger
     pvar = ffi.gc(_lib7zip.create_propvariant(), _lib7zip.destroy_propvariant)
@@ -26,7 +42,7 @@ def test_raw_all():
         for i in range(num_items[0]):
             logger.debug("i=%d", i)
             RNOK(_lib7zip.GetHandlerProperty2(i, _lib7zip.NArchive_kName, pvar))
-            logger.debug("7z=%s", ffi.string(pvar.bstrVal))
+            logger.debug("type=%s", ffi.string(pvar.bstrVal))
             if ffi.string(pvar.bstrVal) == "7z":
                 logger.debug("found it")
                 break
