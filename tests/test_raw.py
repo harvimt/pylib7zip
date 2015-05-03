@@ -30,8 +30,7 @@ def test_version():
 
 def test_raw_all():
     global logger
-    pvar = ffi.gc(_lib7zip.create_propvariant(),
-                  _lib7zip.destroy_propvariant)
+    pvar = ffi.gc(_lib7zip.create_propvariant(), _lib7zip.destroy_propvariant)
     with open_test_file('abc.7z') as f:
         logger.debug("Creating stream...")
         stream = _lib7zip.create_instream_from_file(f)
@@ -43,8 +42,7 @@ def test_raw_all():
         logger.debug("num_items=%d", num_items[0])
         for i in range(num_items[0]):
             logger.debug("i=%d", i)
-            RNOK(_lib7zip.GetHandlerProperty2(
-                i, _lib7zip.NArchive_kName, pvar))
+            RNOK(_lib7zip.GetHandlerProperty2(i, _lib7zip.NArchive_kName, pvar))
             logger.debug("type=%s", ffi.string(pvar.bstrVal))
             if ffi.string(pvar.bstrVal) == "7z":
                 logger.debug("found it")
@@ -63,8 +61,8 @@ def test_raw_all():
         assert archive != ffi.NULL
         logger.debug("...Created")
         logger.debug("Opening...")
-        _lib7zip.archive_open(archive, stream,
-                              ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL)
+        _lib7zip.archive_open(
+            archive, stream, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL, ffi.NULL)
         logger.debug("...Opened")
         RNOK(_lib7zip.archive_get_num_items(archive, num_items))
         logger.debug("num_items=%d", num_items[0])
