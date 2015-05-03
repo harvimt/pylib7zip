@@ -22,6 +22,7 @@ class Archive(object):
         assert self.stream != ffi.NULL
 
     def __enter__(self):
+        """Act as a contextmanager."""
         pvar = ffi.gc(_lib7zip.create_propvariant(), _lib7zip.destroy_propvariant)
         num_items = ffi.new("uint32_t*")
 
@@ -44,6 +45,7 @@ class Archive(object):
         return self
 
     def __exit__(self, *args, **kwargs):
+        """Cleanup when acting as context manager."""
         RNOK(_lib7zip.archive_close(self.archive))
         self.archive_p = None
         self.stream = None
@@ -55,12 +57,15 @@ class Archive(object):
         return num_items[0]
 
     def __getitem__(self, index):
+        """Get ArchiveItem at index."""
         return ArchiveItem(self, index)
 
     def extract(self, directory):
+        """Extract entire archive to directory."""
         pass
 
 class ArchiveItem(object):
+    """Represents an item in an Archive."""
     __slots__ = ('archive', 'index')
     def __init__(self, archive, index):
         self.archive = weakref.ref(archive)
