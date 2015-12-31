@@ -72,4 +72,5 @@ class ArchiveItem(object):
         self.index = index
 
     def extract(self, extract_to):
+        callback = None
         pass

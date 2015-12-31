@@ -37,14 +37,15 @@ static inline void LOG_DEBUG(const char* fmt, ...){
     }
 }
 
-class CInFileStream:
+class CFileStream:
   public IInStream,
+  public IOutStream,
   public IStreamGetSize,
   public CMyUnknownImp
 {
 public:
-  CInFileStream(FILE* file_ptr_in) : file_ptr(file_ptr_in) {}
-  virtual ~CInFileStream() {}
+  CFileStream(FILE* file_ptr_in) : file_ptr(file_ptr_in) {}
+  virtual ~CFileStream() {}
   MY_UNKNOWN_IMP2(IInStream, IStreamGetSize)
 
   STDMETHOD(Read)(void *data, UInt32 size, UInt32 *processedSize);
@@ -55,8 +56,8 @@ private:
   FILE* file_ptr;
 };
 
-STDMETHODIMP CInFileStream::Read (void *data, UInt32 size, UInt32 *processedSize) {
-    LOG_DEBUG("FileIInStream::Read");
+STDMETHODIMP CFileStream::Read (void *data, UInt32 size, UInt32 *processedSize) {
+    LOG_DEBUG("FileStream::Read");
     if(processedSize !=  NULL){
         *processedSize = fread(data, sizeof(uint8_t), size, file_ptr);
     }else{
@@ -65,12 +66,22 @@ STDMETHODIMP CInFileStream::Read (void *data, UInt32 size, UInt32 *processedSize
     return S_OK;
 }
 
+STDMETHODIMP CFileStream::Write (void *data, UInt32 size, UInt32 *processedSize) {
+    LOG_DEBUG("FileStream::Read");
+    if(processedSize !=  NULL){
+        *processedSize = frwite(data, sizeof(uint8_t), size, file_ptr);
+    }else{
+        fwrite(data, sizeof(uint8_t), size, file_ptr);
+    }
+    return S_OK;
+}
+
 #if WIN32
 #define fseeko64 _fseeki64
 #endif
 
-STDMETHODIMP CInFileStream::Seek (Int64 offset, UInt32 seekOrigin, UInt64 *newPosition){
-    LOG_DEBUG("CFileInStream::Seek(%lld, %u, %p)", offset, seekOrigin, newPosition);
+STDMETHODIMP CFileStream::Seek (Int64 offset, UInt32 seekOrigin, UInt64 *newPosition){
+    LOG_DEBUG("CFileStream::Seek(%lld, %u, %p)", offset, seekOrigin, newPosition);
     if (file_ptr == NULL){ LOG_DEBUG("file_ptr is NULL"); return E_ABORT; };
     if(fseeko64(file_ptr, offset, seekOrigin) == -1){
         perror("fseek failed");
@@ -82,8 +93,8 @@ STDMETHODIMP CInFileStream::Seek (Int64 offset, UInt32 seekOrigin, UInt64 *newPo
     return S_OK;
 }
 
-STDMETHODIMP CInFileStream::GetSize(UInt64 *size){
-    LOG_DEBUG("CFileInStream::GetSize(%p)", size);
+STDMETHODIMP CFileStream::GetSize(UInt64 *size){
+    LOG_DEBUG("CFileStream::GetSize(%p)", size);
     if (size == NULL) { return S_OK; }
     off64_t offset = ftello64(file_ptr);
     if(fseeko64(file_ptr, 0, SEEK_END) == -1){
@@ -161,7 +172,8 @@ void destroy_propvariant(PROPVARIANT* pvar){
     delete pvar;
 }
 
-IInStream* create_instream_from_file(FILE* file){ return (IInStream*)(new CInFileStream(file)); }
+IInStream* create_instream_from_file(FILE* file){ return (IInStream*)(new CFileStream(file)); }
+IOuStream* create_oustream_from_file(FILE* file){ return (IOutStream*)(new CFileStream(file)); }
 
 HRESULT archive_open(
     IInArchive* archive,
@@ -209,3 +221,5 @@ HRESULT archive_get_item_property_pvar(
     if(pvar == NULL){ LOG_DEBUG("pvar is NULL"); return E_ABORT; }; //FIXME
     return archive->GetProperty(index, prop_id, pvar);
 }
+
+HRESULT
