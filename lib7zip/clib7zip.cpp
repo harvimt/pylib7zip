@@ -18,6 +18,12 @@
 
 #include "clib7zip.h"
 
+#ifdef WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 static void (*log_debug_cb)(const char*) = NULL;
 
 void set_logger_cb(void(*cb)(const char*)) {
@@ -45,14 +51,16 @@ class CFileStream:
 {
 public:
   CFileStream(FILE* file_ptr_in) : file_ptr(file_ptr_in) {}
-  virtual ~CFileStream() {}
+  virtual ~CFileStream() {fclose(file_ptr);}
   MY_UNKNOWN_IMP2(IInStream, IStreamGetSize)
 
   STDMETHOD(Read)(void *data, UInt32 size, UInt32 *processedSize);
-  STDMETHOD(Write)(void *data, UInt32 size, UInt32 *processedSize);
+  STDMETHOD(Write)(const void *data, UInt32 size, UInt32 *processedSize);
   STDMETHOD(Seek)(Int64 offset, UInt32 seekOrigin, UInt64 *newPosition);
 
   STDMETHOD(GetSize)(UInt64 *size);
+  STDMETHOD(SetSize)(UINT64 size);
+  
 private:
   FILE* file_ptr;
 };
@@ -67,7 +75,7 @@ STDMETHODIMP CFileStream::Read (void *data, UInt32 size, UInt32 *processedSize) 
     return S_OK;
 }
 
-STDMETHODIMP CFileStream::Write (void *data, UInt32 size, UInt32 *processedSize) {
+STDMETHODIMP CFileStream::Write (const void *data, UInt32 size, UInt32 *processedSize) {
     LOG_DEBUG("FileStream::Write");
     if(processedSize !=  NULL){
         *processedSize = static_cast<uint32_t>(fwrite(data, sizeof(uint8_t), size, file_ptr));
@@ -81,6 +89,7 @@ STDMETHODIMP CFileStream::Write (void *data, UInt32 size, UInt32 *processedSize)
 #define fseeko64 _fseeki64
 #define ftello64 _ftelli64
 typedef __int64 off64_t;
+#define ftruncate64 _chsize_s
 #endif
 
 STDMETHODIMP CFileStream::Seek (Int64 offset, UInt32 seekOrigin, UInt64 *newPosition){
@@ -110,6 +119,17 @@ STDMETHODIMP CFileStream::GetSize(UInt64 *size){
     return S_OK;
 }
 
+STDMETHODIMP CFileStream::SetSize(UInt64 size){
+    LOG_DEBUG("CFileStream::SetSize(%p)", size);
+	ftruncate64(_fileno(file_ptr), size);
+	//FIXME handle errors?
+    return S_OK;
+}
+
+IInStream* create_instream_from_file(FILE* file){ return (IInStream*)(new CFileStream(file)); }
+IOutStream* create_oustream_from_file(FILE* file){ return (IOutStream*)(new CFileStream(file)); }
+
+
 class CArchiveOpenCallback:
   public IArchiveOpenCallback,
   public ICryptoGetTextPassword,
@@ -118,29 +138,38 @@ class CArchiveOpenCallback:
 public:
     MY_UNKNOWN_IMP1(ICryptoGetTextPassword)
 
-    CArchiveOpenCallback(void* data)
-        _get_password_callback p_cb,
-        _set_total_callback t_cb, _set_completed_callback c_cb
+    CArchiveOpenCallback(
+		void* data,
+        BSTR password,
+        _aopen_get_password_callback p_cb,
+        _aopen_set_total_callback t_cb,
+		_aopen_set_completed_callback c_cb
     ) :
         data(data),
-        user_password(password), get_password_callback(p_cb),
-        set_total_callback(t_cb), set_completed_callback(c_cb)
+        user_password(password),
+		get_password_callback(p_cb),
+        set_total_callback(t_cb),
+		set_completed_callback(c_cb)
     {};
-
+	
     STDMETHOD(SetTotal)(const UInt64 *files, const UInt64 *bytes);
     STDMETHOD(SetCompleted)(const UInt64 *files, const UInt64 *bytes);
     STDMETHOD(CryptoGetTextPassword)(BSTR *password);
 private:
     void* data;
     wchar_t* user_password;
+	_aopen_get_password_callback get_password_callback;
+	_aopen_set_total_callback set_total_callback;
+	_aopen_set_completed_callback set_completed_callback;
 };
+
 
 STDMETHODIMP CArchiveOpenCallback::SetTotal(const UInt64 * files, const UInt64 * bytes)
 {
     LOG_DEBUG("CArchiveOpenCallback::SetTotal");
-	return S_OK;
+	//return S_OK;
     //if (set_total_callback == NULL) return S_OK;
-    //return set_total_callback(data, (const uint64_t*)(files), (const uint64_t*)(bytes));
+    return set_total_callback(data, files, bytes);
 }
 
 STDMETHODIMP CArchiveOpenCallback::SetCompleted(const UInt64 * files, const UInt64 * bytes)
@@ -171,17 +200,15 @@ void destroy_propvariant(PROPVARIANT* pvar){
     delete pvar;
 }
 
-IInStream* create_instream_from_file(FILE* file){ return (IInStream*)(new CFileStream(file)); }
-IOuStream* create_oustream_from_file(FILE* file){ return (IOutStream*)(new CFileStream(file)); }
 
 HRESULT archive_open(
     IInArchive* archive,
     IInStream* in_stream,
     void* data,
     wchar_t* password,
-    _get_password_callback get_password_callback, /*optional, takes precedence over password */
-    _set_total_callback set_total_callback, /* optional */
-    _set_completed_callback set_completed_callback /* optional */)
+    _aopen_get_password_callback get_password_callback, /*optional, takes precedence over password */
+    _aopen_set_total_callback set_total_callback, /* optional */
+    _aopen_set_completed_callback set_completed_callback /* optional */)
 {
     if (archive == NULL){ return E_ABORT; }
     CArchiveOpenCallback* open_callback = new CArchiveOpenCallback(
