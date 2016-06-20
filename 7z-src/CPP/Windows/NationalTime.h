@@ -3,7 +3,7 @@
 #ifndef __WINDOWS_NATIONALTIME_H
 #define __WINDOWS_NATIONALTIME_H
 
-#include "Common/String.h"
+#include "Common/MyString.h"
 
 namespace NWindows {
 namespace NNational {

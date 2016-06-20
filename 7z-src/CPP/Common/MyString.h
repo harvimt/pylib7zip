@@ -4,6 +4,7 @@
 #define __COMMON_STRING_H
 
 #include <string.h>
+#include <windows.h>
 
 #include "MyVector.h"
 
