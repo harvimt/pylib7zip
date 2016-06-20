@@ -6,6 +6,7 @@
 //#include <dlfcn.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <basetyps.h>
 
 #include "StdAfx.h"
 #include "Windows/PropVariant.h"
@@ -29,6 +30,23 @@ static void (*log_debug_cb)(const char*) = NULL;
 void set_logger_cb(void(*cb)(const char*)) {
     log_debug_cb = cb;
 }
+STDAPI GetNumberOfFormats(uint32_t*);
+STDAPI GetNumberOfMethods(uint32_t *);
+STDAPI GetMethodProperty(uint32_t index, uint32_t propID, PROPVARIANT * value);
+STDAPI GetHandlerProperty2(uint32_t, uint32_t propID, PROPVARIANT *);
+STDAPI CreateObject(const GUID *, const GUID *, void **);
+
+HRESULT _GetNumberOfFormats(uint32_t* num_formats){ return GetNumberOfFormats(num_formats); }
+HRESULT _GetNumberOfMethods(uint32_t* num_methods){ return GetNumberOfMethods(num_methods);}
+HRESULT _GetMethodProperty(uint32_t index, uint32_t propID, PROPVARIANT * value){ return GetMethodProperty(index, propID, value);}
+HRESULT _GetHandlerProperty2(uint32_t index, uint32_t propID, PROPVARIANT * value){ return GetHandlerProperty2(index, propID, value);}
+HRESULT _CreateObject(const GUID * _1, const GUID * _2, void ** _3){return CreateObject(_1, _2, _3);}
+
+//HRESULT GetNumberOfMethods(uint32_t *);
+//HRESULT GetMethodProperty(uint32_t index, uint32_t propID, PROPVARIANT * value);
+//HRESULT GetHandlerProperty2(uint32_t, uint32_t propID, PROPVARIANT *);
+//HRESULT CreateObject(const GUID *, const GUID *, void **);
+
 
 static inline void LOG_DEBUG(const char* fmt, ...){
     char buffer[256];
@@ -127,7 +145,7 @@ STDMETHODIMP CFileStream::SetSize(UInt64 size){
 }
 
 IInStream* create_instream_from_file(FILE* file){ return (IInStream*)(new CFileStream(file)); }
-IOutStream* create_oustream_from_file(FILE* file){ return (IOutStream*)(new CFileStream(file)); }
+IOutStream* create_outstream_from_file(FILE* file){ return (IOutStream*)(new CFileStream(file)); }
 
 class PyFileStream:
   public IInStream,

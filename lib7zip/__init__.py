@@ -1,7 +1,51 @@
 from _lib7zip import ffi, lib
+from enum import IntEnum
+
+__all__ = ('get_7z_version', 'get_types')
 
 def get_7z_version():
 	return ffi.string(lib.C_MY_VERSION)
+
+class HresultException(Exception):
+	def __init__(self, hresult, message='no message'):
+		super().__init__('0x{:016x} - {}'.format(hresult, message))
+	
+def RNOK(hresult, message='RNOK failed'):
+	if hresult != lib.S_OK:
+		raise HresultException(hresult, message)
+		
+def create_pvar():
+	return ffi.gc(lib.create_propvariant(), lib.destroy_propvariant)
+
+def pvar_getval(pvar):
+	if pvar.vt == lib.VT_BOOL:
+		return bool(pvar.bVal)
+	elif pvar.vt == lib.VT_UI4:
+		return pvar.ulVal;
+	elif pvar.vt == lib.VT_UI8:
+		return pvar.uhVal;
+	elif pvar.vt == lib.VT_EMPTY or pvar.vt == lib.VT_NULL:
+		return None
+	elif pvar.vt == lib.VT_ERROR:
+		raise Exception("Propvariant Exception")
+	elif pvar.vt == lib.VT_BSTR:
+		return ffi.string(pvar.bstrVal)
+	elif pvar.vt == lib.VT_CLSID:
+		return None # TODO handle guid
+	elif pvar.vt == lib.VT_FILETIME:
+		return None #TODO handle filetime
+	else:
+		raise Exception("Unhandled Propvariant Type")
+
+
+def get_types():
+	num_formats = ffi.new('uint32_t*')
+	RNOK(lib._GetNumberOfFormats(num_formats))
+	pvar = create_pvar()
+	for i in range(num_formats[0]):
+		lib._GetHandlerProperty2(i, lib.NArchive_kName, pvar);
+		print(pvar_getval(pvar))
+
 	
 @ffi.def_extern
 def py_file_read(file, data, size, processedSize):

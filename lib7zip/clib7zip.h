@@ -56,7 +56,6 @@ typedef HRESULT (*_stream_seek_callback)
 typedef HRESULT (*_stream_get_size_callback)(void* self, uint64_t *size);
 
 
-
 IInStream* create_instream_from_file(FILE* file);
 IOutStream* create_outstream_from_file(FILE* file);
 /*
@@ -86,6 +85,7 @@ HRESULT(*_aextract_set_operation_result_callback)
     (void* self, int32_t resultEOperationResult);
 
 //IInArchive
+/*
 IInArchive* create_archive(const wchar_t* type);
 void archive_release(IInArchive* archive);
 
@@ -99,6 +99,7 @@ HRESULT archive_get_item_property_uint64(
     IInArchive* archive, uint32_t index, uint32_t prop_id, uint64_t* out);
 
 HRESULT archive_close(IInArchive*);
+*/
 //CDEF END
 
 HRESULT py_file_read(void* file, void *data, uint32_t size, uint32_t *processedSize);

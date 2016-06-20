@@ -12,17 +12,14 @@ import cffi
 
 ffi = cffi.FFI()
 
-
-with (workdir / 'clib7zip.cpp').open('r') as f:
-	clib7zip_cpp = f.read()
 with (workdir / 'clib7zip.h').open('r') as f:
 	clib7zip_h_lines = []
 	in_body = False
 	for line in f:
-		if line == '//CDEF START':
+		if line == '//CDEF START\n':
 			in_body = True
-		elif line == '//CDEF END':
-			in_body = True
+		elif line == '//CDEF END\n':
+			in_body = False
 		elif in_body:
 			clib7zip_h_lines.append(line)
 
@@ -51,19 +48,13 @@ extern "Python+C" HRESULT py_file_setsize(void* file, uint64_t size);
 extern "Python+C" HRESULT py_file_close(void* file);
 """)
 
-source_files =[
+source_files = [
 	str(p) for p in itertools.chain(
 		[workdir / 'clib7zip.cpp'],
-		#(p for p in srcdir.glob('CPP/Common/*.cpp') if p.name not in {'CommandLineParser.cpp', 'C_FileIO.cpp'}),
-		#srcdir.glob('CPP/Windows/*.cpp'),
-		#(p for p in srcdir.glob('CPP/Common/*.cpp') if p.name not in ('C_FileIO.cpp', 'Random.cpp', 'StdInStream.cpp', 'StdOutStream.cpp')),
-
 		(srcdir / 'CPP/Common' / p for p in (
 			'CRC.cpp',
 			'IntToString.cpp',
 			'ListFileUtils.cpp',
-			#'StdInStream.cpp',
-			#'StdOutStream.cpp',
 			'MyString.cpp',
 			'MyWindows.cpp',
 			'StringConvert.cpp',
@@ -72,20 +63,14 @@ source_files =[
 			'MyVector.cpp',
 			'Wildcard.cpp',
 		)),
-		#(srcdir / 'CPP/Windows' / p for p in (
-		#	'COM.cpp',
-		#	'Error.cpp',
-		#	'FileDir.cpp',
-		#	'FileFind.cpp',
-		#	'FileIO.cpp',
-		#	'FileName.cpp',
-		#	'PropVariant.cpp',
-		#	'PropVariantConversions.cpp',
-		#	'Synchronization.cpp',
-		#	'System.cpp',
-		#	'NationalTime.cpp',
-		#)),
-		(p for p in srcdir.glob('CPP/Windows/*.cpp') if p.name not in ('Net.cpp', 'Registry.cpp', 'MemoryLock.cpp', 'CommonDialog.cpp', 'Security.cpp', 'Shell.cpp')),
+		(p for p in srcdir.glob('CPP/Windows/*.cpp') if p.name not in (
+			'Net.cpp',
+			'Registry.cpp',
+			'MemoryLock.cpp',
+			'CommonDialog.cpp',
+			'Security.cpp',
+			'Shell.cpp',
+		)),
 		(srcdir / 'CPP/7zip/Common' / p for p in (
 			'CreateCoder.cpp',
 			'CWrappers.cpp',
@@ -109,10 +94,7 @@ source_files =[
 			'StreamUtils.cpp',
 			'VirtThread.cpp',
 		)),
-		#(p for p in srcdir.glob('CPP/7zip/Common/*.cpp') if p.name not in ()),
-		#(p for p in srcdir.glob('CPP/7zip/UI/Common/*.cpp') if p.name not in ('CompressCall.cpp', 'CompressCall2.cpp', 'ZipRegistry.cpp')),
 		(srcdir / 'CPP/7zip' / p for p in (
-			#'Archive/DllExports.cpp',
 			'Archive/DllExports2.cpp',
 			'Archive/ArchiveExports.cpp',
 			'Archive/Bz2Handler.cpp',
@@ -229,41 +211,6 @@ source_files =[
 			'Crypto/ZipStrong.cpp',
 		)),
 		srcdir.glob('C/*.c'),
-		#(srcdir / 'C' / p for p in (
-		#	'Aes.c',
-		#	'AesOpt.c',
-		#	'7zStream.c',
-		#	'Alloc.c',
-		#	'Bra.c',
-		#	'Bra86.c',
-		#	'BraIA64.c',
-		#	'BwtSort.c',
-		#	'Delta.c',
-		#	'HuffEnc.c',
-		#	'LzFind.c',
-		#	'LzFindMt.c',
-		#	'Lzma2Dec.c',
-		#	'Lzma2Enc.c',
-		#	'LzmaDec.c',
-		#	'LzmaEnc.c',
-		#	'MtCoder.c',
-		#	'Ppmd7.c',
-		#	'Ppmd7Dec.c',
-		#	'Ppmd7Enc.c',
-		#	'Ppmd8.c',
-		#	'Ppmd8Dec.c',
-		#	'Ppmd8Enc.c',
-		#	'Sha256.c',
-		#	'Sort.c',
-		#	'Threads.c',
-		#	'Xz.c',
-		#	'XzCrc64.c',
-		#	'XzDec.c',
-		#	'XzEnc.c',
-		#	'XzIn.c',
-		#	'7zCrc.c',
-		#	'7zCrcOpt.c',
-		#)),
 	)
 ]
 
@@ -298,8 +245,10 @@ HRESULT py_file_read(void* file, void *data, uint32_t size, uint32_t *processedS
 		('_UNICODE', True),
     ],
 	sources=source_files,
-	libraries=['user32','OleAut32', 'ole32']
+	libraries=['user32','OleAut32', 'ole32'],
+	#extra_compile_args=['/GL-'], # disable whole program optimization (easier to debug linking problems)
 )
 
 if __name__ == '__main__':
-	ffi.compile(verbose=True)
+	pass
+	#ffi.compile(verbose=True)
