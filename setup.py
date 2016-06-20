@@ -11,7 +11,7 @@ setup(
     author="Mark Harviston",
 	author_email="mark.harviston@gmail.com",
 	packages=["lib7zip"],
-	licsense='LGPL',
+	license='LGPL',
 	long_description=long_description,
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["lib7zip/_build.py:ffi"],
