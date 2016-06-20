@@ -55,6 +55,8 @@ typedef HRESULT (*_stream_seek_callback)
     (void* self, uint64_t offset, int32_t seekOrigin, uint64_t *newPosition);
 typedef HRESULT (*_stream_get_size_callback)(void* self, uint64_t *size);
 
+
+
 IInStream* create_instream_from_file(FILE* file);
 IOutStream* create_outstream_from_file(FILE* file);
 /*
@@ -98,6 +100,13 @@ HRESULT archive_get_item_property_uint64(
 
 HRESULT archive_close(IInArchive*);
 //CDEF END
+
+HRESULT py_file_read(void* file, void *data, uint32_t size, uint32_t *processedSize);
+HRESULT py_file_write(void* file, const void *data, uint32_t size, uint32_t *processedSize);
+HRESULT py_file_seek(void* file, uint64_t offset, int32_t seekOrigin, uint64_t *newPosition);
+HRESULT py_file_getsize(void* file, uint64_t *size);
+HRESULT py_file_setsize(void* file, uint64_t size);
+HRESULT py_file_close(void* file);
 
 #ifdef __cplusplus
 }

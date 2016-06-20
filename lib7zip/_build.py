@@ -42,6 +42,13 @@ const char* C_MY_7ZIP_VERSION;
 const char* C_MY_DATE;
 const char* C_MY_COPYRIGHT;
 const char* C_MY_VERSION_COPYRIGHT_DATE;
+
+extern "Python+C" HRESULT py_file_read(void* file, void *data, uint32_t size, uint32_t *processedSize);
+extern "Python+C" HRESULT py_file_write(void* file, const void *data, uint32_t size, uint32_t *processedSize);
+extern "Python+C" HRESULT py_file_seek(void* file, uint64_t offset, int32_t seekOrigin, uint64_t *newPosition);
+extern "Python+C" HRESULT py_file_getsize(void* file, uint64_t* size);
+extern "Python+C" HRESULT py_file_setsize(void* file, uint64_t size);
+extern "Python+C" HRESULT py_file_close(void* file);
 """)
 
 source_files =[
@@ -275,6 +282,7 @@ const char* C_MY_VERSION_COPYRIGHT_DATE = MY_VERSION_COPYRIGHT_DATE;
 
 extern int g_CodePage = -1;
 
+HRESULT py_file_read(void* file, void *data, uint32_t size, uint32_t *processedSize);
 """,
 	include_dirs=[
         workdir,
@@ -293,5 +301,5 @@ extern int g_CodePage = -1;
 	libraries=['user32','OleAut32', 'ole32']
 )
 
-#if __name__ == '__main__':
-	#ffi.compile(verbose=True)
+if __name__ == '__main__':
+	ffi.compile(verbose=True)

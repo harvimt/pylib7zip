@@ -129,6 +129,47 @@ STDMETHODIMP CFileStream::SetSize(UInt64 size){
 IInStream* create_instream_from_file(FILE* file){ return (IInStream*)(new CFileStream(file)); }
 IOutStream* create_oustream_from_file(FILE* file){ return (IOutStream*)(new CFileStream(file)); }
 
+class PyFileStream:
+  public IInStream,
+  public IOutStream,
+  public IStreamGetSize,
+  public CMyUnknownImp
+{
+public:
+  PyFileStream(void* py_file_in) : py_file(py_file_in) {}
+  virtual ~PyFileStream() {py_file_close(py_file);}
+  MY_UNKNOWN_IMP2(IInStream, IStreamGetSize)
+
+  STDMETHOD(Read)(void *data, UInt32 size, UInt32 *processedSize);
+  STDMETHOD(Write)(const void *data, UInt32 size, UInt32 *processedSize);
+  STDMETHOD(Seek)(Int64 offset, UInt32 seekOrigin, UInt64 *newPosition);
+
+  STDMETHOD(GetSize)(UInt64 *size);
+  STDMETHOD(SetSize)(UINT64 size);
+  
+private:
+  void* py_file;
+};
+
+STDMETHODIMP PyFileStream::Read (void *data, UInt32 size, UInt32 *processedSize) {
+	return py_file_read(py_file, data, size, processedSize);
+}
+
+STDMETHODIMP PyFileStream::Write (const void *data, UInt32 size, UInt32 *processedSize) {
+	return py_file_write(py_file, data, size, processedSize);
+}
+
+STDMETHODIMP PyFileStream::Seek (Int64 offset, UInt32 seekOrigin, UInt64 *newPosition){
+	return py_file_seek(py_file, offset, seekOrigin, newPosition);
+}
+
+STDMETHODIMP PyFileStream::GetSize(UInt64 *size){
+    return py_file_getsize(py_file, size);
+}
+
+STDMETHODIMP PyFileStream::SetSize(UInt64 size){
+	return py_file_setsize(py_file, size);
+}
 
 class CArchiveOpenCallback:
   public IArchiveOpenCallback,
