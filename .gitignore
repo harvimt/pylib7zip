@@ -1,5 +1,6 @@
 Release/
 build/
+dist/
 .eggs/
 _*.c
 *.pyd
