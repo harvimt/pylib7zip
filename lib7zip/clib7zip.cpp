@@ -42,12 +42,6 @@ HRESULT _GetMethodProperty(uint32_t index, uint32_t propID, PROPVARIANT * value)
 HRESULT _GetHandlerProperty2(uint32_t index, uint32_t propID, PROPVARIANT * value){ return GetHandlerProperty2(index, propID, value);}
 HRESULT _CreateObject(const GUID * _1, const GUID * _2, void ** _3){return CreateObject(_1, _2, _3);}
 
-//HRESULT GetNumberOfMethods(uint32_t *);
-//HRESULT GetMethodProperty(uint32_t index, uint32_t propID, PROPVARIANT * value);
-//HRESULT GetHandlerProperty2(uint32_t, uint32_t propID, PROPVARIANT *);
-//HRESULT CreateObject(const GUID *, const GUID *, void **);
-
-
 static inline void LOG_DEBUG(const char* fmt, ...){
     char buffer[256];
     va_list args;

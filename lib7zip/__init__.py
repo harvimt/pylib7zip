@@ -46,7 +46,7 @@ def get_types():
 		lib._GetHandlerProperty2(i, lib.NArchive_kName, pvar);
 		print(pvar_getval(pvar))
 
-	
+
 @ffi.def_extern
 def py_file_read(file, data, size, processedSize):
 	try:
